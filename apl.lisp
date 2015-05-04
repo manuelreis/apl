@@ -12,9 +12,24 @@
 
 ;(defun v (&rest args) args (make-instance 'tensor :init-val (make-array (list-length args) :initial-contents args)))
 
-(defun s (arg) `#(,arg))
+(defun s (arg) `(,arg))
 
-(defun v (&rest args) args (make-array (list-length args) :initial-contents args))
+(defun v (&rest args) args)
 
+(defgeneric print-tensor (arg))
 
-(defun print-tensor (tensor) tensor)
+(defmethod print-tensor ((arg number)) 
+  (progn
+    (princ (write-to-string arg))
+    (princ " ")
+    0))
+
+(defmethod print-tensor ((arg list))
+  (setq lines 0)
+	  (dolist (x arg)
+	    (let ((lines-aux (print-tensor x)))
+	      (dotimes (i lines) 
+	        (princ #\linefeed))
+	      (setq lines (+ lines-aux 1))))
+   lines
+)
