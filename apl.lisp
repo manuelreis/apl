@@ -24,9 +24,9 @@
             '()
             (cons (s (car lst)) (v-aux (cdr lst)))))
     (make-instance 'tensor-lst :init-val (v-aux args)))
-;(defun s (arg) `(,arg))
 
-;(defun v (&rest args) args)
+(defun v-from-lst (lst)
+    (make-instance 'tensor-lst :init-val (v-aux lst)))
 
 (defmethod PRINT-OBJECT ((object tensor-scalar) stream)
     (format stream "~d" (get-content object)))
@@ -56,10 +56,17 @@
 ;shape - Creates a vector containing the length of 
 ;        each dimension of the argument tensor. 
 (defgeneric shape (tnsr))
-(defmethod shape ((tnsr number))
+(defmethod shape ((tnsr tensor-scalar))
     NIL)
-(defmethod shape ((tnsr list))
-    (cons (list-length tnsr) (shape (car tnsr))))
+(defmethod shape ((tnsr tensor-lst))
+    (let ((sclr (list-length (get-content tnsr))))
+
+        )
+
+    (let ((dimension (shape (car (get-content tnsr)))))
+        (if (not (null dimension))
+             )
+        (cons  dimension)))
 
 ;interval - Creates a vector containing an enumeration
 ;           of all integers starting from 1 up to the
