@@ -29,7 +29,7 @@
     (make-instance 'tensor-lst :init-val (v-aux lst)))
 
 (defmethod PRINT-OBJECT ((object tensor-scalar) stream)
-    (format stream "~d" (get-content object)))
+    (format stream "{~d}" (get-content object)))
 
 (defmethod PRINT-OBJECT ((object tensor-lst) stream)
     (format stream "~a " (get-content object )))
@@ -59,14 +59,10 @@
 (defmethod shape ((tnsr tensor-scalar))
     NIL)
 (defmethod shape ((tnsr tensor-lst))
-    (let ((sclr (list-length (get-content tnsr))))
-
-        )
-
-    (let ((dimension (shape (car (get-content tnsr)))))
-        (if (not (null dimension))
-             )
-        (cons  dimension)))
+    (let ((dimension (shape (car (get-content tnsr))))) 
+        (if (null dimension)
+            (v-from-lst (list (list-length (get-content tnsr))))
+            (v-from-lst (cons (list-length (get-content tnsr)) (get-content dimension))))))
 
 ;interval - Creates a vector containing an enumeration
 ;           of all integers starting from 1 up to the
