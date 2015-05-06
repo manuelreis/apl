@@ -2,40 +2,51 @@
 ;;			 BASE STRUCTURE				 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;(defclass tensor ()
-;	((slot-content :initform (make-array 0)
-;				 :accessor tensor-content
-;				 :initarg :init-val))
-;	)
+(defclass tensor ()
+    ((slot-content 
+        :accessor tensor-content
+        :initarg :init-val))
+)
 
-;(defun s (arg) (make-instance 'tensor :init-val `#(,arg)))
+(defclass tensor-lst (tensor) ())
 
-;(defun v (&rest args) args (make-instance 'tensor :init-val (make-array (list-length args) :initial-contents args)))
+(defclass tensor-scalar (tensor) ())
 
-(defun s (arg) `(,arg))
+(defgeneric get-content (object))
+(defmethod get-content ((object tensor))
+    (slot-value object 'slot-content))
 
-(defun v (&rest args) args)
+(defun s (arg) (make-instance 'tensor-scalar :init-val arg))
 
-(defgeneric print-tensor (arg))
+(defun v (&rest args)
+    (defun v-aux (lst)
+        (if (null lst)
+            '()
+            (cons (s (car lst)) (v-aux (cdr lst)))))
+    (make-instance 'tensor-lst :init-val (v-aux args)))
+;(defun s (arg) `(,arg))
 
-(defmethod print-tensor ((arg number))
-    (progn
-        (princ (write-to-string arg))
-        (princ " ")
-    0))
+;(defun v (&rest args) args)
 
-(defmethod print-tensor ((arg list))
-    (let ((lines 0))
-        (if arg
-            (progn
-                (setq lines (print-tensor (car arg)))
-                (if (cdr arg)
-                    (progn
-                        (dotimes (i lines)
-                            (princ #\newline))
-                        (print-tensor (cdr arg))))))
-        (+ lines 1)))
+(defmethod PRINT-OBJECT ((object tensor-scalar) stream)
+    (format stream "~d" (get-content object)))
 
+(defmethod PRINT-OBJECT ((object tensor-lst) stream)
+    (format stream "~a " (get-content object )))
+
+
+
+; (defmethod print-tensor ((arg list))
+;     (let ((lines 0))
+;         (if arg
+;             (progn
+;                 (setq lines (print-tensor (car arg)))
+;                 (if (cdr arg)
+;                     (progn
+;                         (dotimes (i lines)
+;                             (princ #\newline))
+;                         (print-tensor (cdr arg))))))
+;         (+ lines 1)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
