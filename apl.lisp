@@ -141,33 +141,33 @@
 
 (defgeneric drop (n1 tensor))
 
-(defmethod drop ((n1 scalar) (tnsr tensor))
+(defmethod drop ((n1 tensor-scalar) (tnsr tensor))
 	(let ((n (get-content n1)))
 		(cond ((= n 0) tnsr)
-			((> n 0) (drop (s (- n 1)) (rest tnsr)))       
-			(t (drop (s (+ n 1)) (butlast tnsr))))))
+			((> n 0) (drop (s (- n 1)) (rest (get-content tnsr ))))       
+			(t (drop (s (+ n 1)) (v-from-lst (butlast (get-content tnsr))))))))
 
-(defmethod drop ((n1 tensor-lst) (tnsr1 tensor))
-	(let ((n (get-content n1))
-		  (tnsr (get-content tnsr1))
-		  (first-elem (get-content (car n)))
-		  (remaining (rest n)))
-		(cond (and (= (list-length n) 1) (= first-elem 0) tnsr1)
-			((= first-elem 0) (drop remaining tnsr)) ;mas assim vai voltar  remover da primeira dim :(
-			((> first-elem 0) (drop (cons (s (- first-elem 1)) remaining)        )   )
+;(defmethod drop ((n1 tensor-lst) (tnsr1 tensor))
+;	(let ((n (get-content n1))
+;		  (tnsr (get-content tnsr1))
+;		  (first-elem (get-content (car n)))
+;		  (remaining (rest n)))
+;		(cond (and (= (list-length n) 1) (= first-elem 0) tnsr1)
+;			((= first-elem 0) (drop remaining tnsr)) ;mas assim vai voltar  remover da primeira dim :(
+;			((> first-elem 0) (drop (cons (s (- first-elem 1)) remaining)        )   )
 
-			)
-
-
+;			)
 
 
-		))
 
-(defun all-equal(lst value)
-	(all-equal-aux lst value T))
 
-(defun all-equal-aux(lst value bool)
+;		))
 
-)
+;(defun all-equal(lst value)
+;	(all-equal-aux lst value T))
+
+;(defun all-equal-aux(lst value bool)
+
+;)
 
 
