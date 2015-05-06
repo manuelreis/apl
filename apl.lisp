@@ -26,7 +26,7 @@
     (make-instance 'tensor-lst :init-val (v-aux args)))
 
 (defun v-from-lst (lst)
-    (make-instance 'tensor-lst :init-val (v-aux lst)))
+    (make-instance 'tensor-lst :init-val lst))
 
 (defmethod PRINT-OBJECT ((object tensor-scalar) stream)
     (format stream "{~d}" (get-content object)))
@@ -71,9 +71,9 @@
 (defmethod interval ((num number))
     (defun recursive-interval (num lst)
         (if (<= num 1)
-            (cons 1 lst)
-            (recursive-interval (- num 1) (cons num lst))))
-    (recursive-interval num '()))
+            (cons (s 1) lst)
+            (recursive-interval (- num 1) (cons (s num) lst))))
+    (v-from-lst (recursive-interval num '())))
 
 ;fold - Accepts a function and returns another function
 ;       that, given a vector, computes the application
