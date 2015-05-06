@@ -151,7 +151,7 @@
 (defmethod drop ((n1 tensor-scalar) (tnsr tensor))
 	(let ((n (get-content n1)))
 		(cond ((= n 0) tnsr)
-			((> n 0) (drop (s (- n 1)) (rest (get-content tnsr ))))       
+			((> n 0) (drop (s (- n 1)) (v-from-lst (rest (get-content tnsr )))))       
 			(t (drop (s (+ n 1)) (v-from-lst (butlast (get-content tnsr))))))))
 
 ;(defmethod drop ((n1 tensor-lst) (tnsr1 tensor))
