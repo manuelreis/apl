@@ -187,4 +187,40 @@
 					(new-tnsr (v-from-lst (remove-lists-dim tnsr1 n_els dim))))
 				(drop new-n1 new-tnsr))))
 
+;reshape - Returns a tensor with the dimensions refered in the first argument,
+;          whose elements are taken from the second argument, repeating them if
+;          necessary to fill the resulting tensor
+
+(defun rotate (vec)
+	(let ((vec-c (get-content vec)))
+  (v-from-lst (append (rest vec-c) (list (first vec-c))))))
+
+(defgeneric reshape (dims fill-data))
+
+(defvar fill-data-var)
+
+(defun get-first-fill-data()
+	(let ((el (first (get-content fill-data-var))))
+		(progn (setf fill-data-var (rotate fill-data-var))
+				el)))
+
+(defun reshape-aux (dims)
+	(if (= (list-length (get-content dims)) 0)
+		(get-first-fill-data)		
+		(let ((dim-qty  (get-content (car (last (get-content dims)))))
+			  (rest-dim (butlast (get-content dims))))
+			  (v-from-lst (loop for i from 1 to dim-qty 
+			  					collect (reshape-aux (v-from-lst rest-dim)))))))
+
+(defmethod reshape ((dims tensor-lst) (fill-data tensor-lst))
+    (progn (setf  fill-data-var fill-data)
+    	(reshape-aux dims)))
+
+
+
+
+
+
+
+
 
