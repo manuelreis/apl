@@ -31,22 +31,27 @@
 (defmethod PRINT-OBJECT ((object tensor-scalar) stream)
     (format stream "{~d}" (get-content object)))
 
+(defmethod PRINT-OBJECT-STRING ((object tensor-scalar))
+    (cons 0 (concatenate 'string "{" (write-to-string (get-content object)) "} ")))
+
+(defmethod PRINT-OBJECT-STRING ((arg tensor-lst))
+    (let ((temp NIL)
+        (lines 0)
+        (str ""))
+        (if arg
+            (progn
+                (setq temp (PRINT-OBJECT-STRING (car (get-content arg))))
+                (setq lines (car temp))
+                (setq str (concatenate 'string str (cdr temp)))
+                (if (cdr (get-content arg))
+                    (progn
+                        (dotimes (i lines)
+                            (setq str (concatenate 'string str "~%")))
+                        (setq str (concatenate 'string str (cdr (PRINT-OBJECT-STRING (v-from-lst (cdr (get-content arg))))))) ))))
+        (cons (+ lines 1) str)))
+
 (defmethod PRINT-OBJECT ((object tensor-lst) stream)
-    (format stream "~a " (get-content object )))
-
-
-
-; (defmethod print-tensor ((arg list))
-;     (let ((lines 0))
-;         (if arg
-;             (progn
-;                 (setq lines (print-tensor (car arg)))
-;                 (if (cdr arg)
-;                     (progn
-;                         (dotimes (i lines)
-;                             (princ #\newline))
-;                         (print-tensor (cdr arg))))))
-;         (+ lines 1)))
+    (format stream (cdr (PRINT-OBJECT-STRING object))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
