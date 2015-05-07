@@ -143,13 +143,13 @@
 	(get-dim-and-n-aux n 0 0 NIL '()))
 
 (defun remove-lists-dim-aux (lst n dim deep)
+	(let ((con-lst (get-content lst)))
 	(if (= deep dim)
 		(if (> n 0)
-			(nthcdr n lst)
-			(reverse (nthcdr (- 0 n) (reverse lst))))
-		(map 'list #'(lambda (sub-lst) (remove-lists-dim-aux sub-lst n dim (+ deep 1))) lst)))  		
+			(nthcdr n con-lst)
+			(reverse (nthcdr (- 0 n) (reverse con-lst))))
+		(map 'list #'(lambda (sub-lst) (v-from-lst (remove-lists-dim-aux sub-lst n dim (+ deep 1)) ) ) con-lst)))) 		
 
-	
 (defun remove-lists-dim(lst n dim) ;remove n ou -n listas na dim d
 	(remove-lists-dim-aux lst n dim 1))
 
@@ -163,8 +163,6 @@
 
 (defun all-equal(lst value)
 	(all-equal-aux lst value T))
-
-
 
 ;drop -	Accepts a scalar n1 or vector (of elements ni) and a non-scalar tensor and
 ;		returns a tensor where the first (if n > 0) or last (if n < 0) n elements of
@@ -180,17 +178,13 @@
 
 
 (defmethod drop ((n1 tensor-lst) (tnsr1 tensor))
-	(let ( ;(n (get-content n1))
-		  (tnsr (get-content tnsr1)))
 		(if (all-equal n1 0)
 			tnsr1
 			(let* ((new_dim_n (get-dim-and-n n1))
 					(new-n1 (car new_dim_n))
 					(n_els (second new_dim_n))
 					(dim (third new_dim_n))
-					(new-tnsr (v-from-lst (remove-lists-dim tnsr n_els dim))))
-				(drop new-n1 new-tnsr)))))
-
-
+					(new-tnsr (v-from-lst (remove-lists-dim tnsr1 n_els dim))))
+				(drop new-n1 new-tnsr))))
 
 
