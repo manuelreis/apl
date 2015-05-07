@@ -66,8 +66,8 @@
 (defmethod shape ((tnsr tensor-lst))
     (let ((dimension (shape (car (get-content tnsr))))) 
         (if (null dimension)
-            (v-from-lst (list (list-length (get-content tnsr))))
-            (v-from-lst (cons (list-length (get-content tnsr)) (get-content dimension))))))
+            (v-from-lst (list (s (list-length (get-content tnsr)))))
+            (v-from-lst (append (get-content dimension) (list (s (list-length (get-content tnsr)))))))))
 
 ;interval - Creates a vector containing an enumeration
 ;           of all integers starting from 1 up to the
