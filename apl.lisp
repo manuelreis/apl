@@ -80,9 +80,9 @@
 ;       of the function to sucessive elements of the vector.
 (defgeneric fold (func))
 (defmethod fold ((func function))
-    (defun fold-aux (lst)
+    (defun fold-aux (vctr)
         (let ((res NIL))
-                (dolist (element lst res)
+                (dolist (element (get-content vctr))
                     (if (null res)
                         (setq res element)
                         (setq res (funcall func element res))))
@@ -95,15 +95,15 @@
 ;       up to a subset containing all elements. 
 (defgeneric scan (func))
 (defmethod scan ((func function))
-    (defun scan-aux (lst)
+    (defun scan-aux (vctr)
         (let ((last-value NIL)
               (res '()))
-                (dolist (element lst)
+                (dolist (element (get-content vctr))
                     (if (null res)
                         (setq last-value element)
                         (setq last-value (funcall func element last-value)))
                     (setq res (append res (list last-value))))
-            res))
+            (v-from-lst res)))
     #'scan-aux)
 
 ;outer-product - Accepts a function and returns another
@@ -114,19 +114,6 @@
 (defgeneric outer-product (func))
 (defmethod outer-product ((func function))
     func)
-
-
-;apply-fun - Accepts a function and returns another function
-;            that, given a tensor, applies the function to each
-;            element
-(defgeneric apply-func (func))
-(defmethod apply-func ((func function))
-    (defun apply-func-aux (lst)
-        (cond
-            ((null lst) lst)
-            ((listp lst) (cons (apply-func-aux (car lst)) (apply-func-aux (cdr lst))))
-            (T (funcall func lst))))
-    #'apply-func-aux)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
