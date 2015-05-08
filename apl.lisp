@@ -70,6 +70,22 @@
 (defmethod PRINT-OBJECT ((object tensor-lst) stream)
     (format stream (cdr (PRINT-OBJECT-STRING object))))
 
+(defmethod tensor-to-vector ((tnsr tensor-lst))
+    (v-from-lst (tensor-to-vector-aux tnsr)))
+(defmethod tensor-to-vector-aux ((tnsr tensor-scalar))
+    (list tnsr))
+(defmethod tensor-to-vector-aux ((tnsr tensor-lst))
+    (let ((temp NIL)
+        (lst NIL))
+        (if tnsr
+            (progn
+                (setq temp (tensor-to-vector-aux (car (get-content tnsr))))
+                (setq lst (append lst temp))
+                (if (cdr (get-content tnsr))
+                    (progn
+                        (setq lst (append lst (tensor-to-vector-aux (v-from-lst (cdr (get-content tnsr)))))) ))))
+        lst))
+
 (defmethod hack-dims ((dims tensor-lst))
     (let ((lst (get-content dims)))
         (v-from-lst (if (> (list-length lst) 1)
@@ -141,7 +157,17 @@
 ;                from the first and second tensors.
 (defgeneric outer-product (func))
 (defmethod outer-product ((func function))
-    func)
+    (defun outer-product-aux (tnsr1 tnsr2)
+        (let ((shape1 (get-content (shape tnsr1)))
+                (shape2 (get-content (shape tnsr2)))
+                (v-tnsr1 (tensor-to-vector tnsr1))
+                (v-tnsr2 (tensor-to-vector tnsr2))
+                (result NIL))
+            (dolist (element1 (get-content v-tnsr1))
+                (dolist (element2 (get-content v-tnsr2))
+                    (setq result (append result (list (funcall func element1 element2))))))
+            (reshape (v-from-lst (append shape2 shape1)) (v-from-lst result))))
+    #'outer-product-aux)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
