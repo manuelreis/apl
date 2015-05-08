@@ -386,6 +386,14 @@
         (list)
         (cons (funcall func int (car lst)) (dyadic-tns-scalar func int (cdr lst)))))
 
+(defun dyadic-equal-dim (lst1 lst2)
+    (if (null lst1)
+        t
+        (progn
+            (if (= (get-content (car lst1)) (get-content (car lst2)))
+                (dyadic-equal-dim (cdr lst1) (cdr lst2))
+                NIL)))) 
+
 
 ;.+ Creates a tensor with the sum of the corresponding 
 ;elements of the argument tensors.
@@ -399,9 +407,10 @@
 (defmethod .+ ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.+ arg2 (get-content arg1))))
 
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
 (defmethod .+ ((arg1 tensor-lst) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.+ (get-content arg1) (get-content arg2))))
+    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+        (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.+ (get-content arg1) (get-content arg2)))
+        nil))
 
 
 ;.- Same as the previous one, but using subtraction.
@@ -415,9 +424,10 @@
 (defmethod .-Dyadic ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.-Dyadic arg2 (get-content arg1))))
 
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
 (defmethod .-Dyadic ((arg1 tensor-lst) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.-Dyadic (get-content arg1) (get-content arg2))))
+    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+        (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.-Dyadic (get-content arg1) (get-content arg2)))
+        nil))
 
 
 ;.* Same as the previous one, but using multiplication. 
@@ -431,10 +441,10 @@
 (defmethod .* ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.* arg2 (get-content arg1))))
 
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
 (defmethod .* ((arg1 tensor-lst) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.* (get-content arg1) (get-content arg2))))
-
+    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+        (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.* (get-content arg1) (get-content arg2)))
+        nil))
 
 ;./ Same as the previous one, but using division. 
 (defgeneric ./Dyadic (arg1 arg2))
@@ -447,9 +457,10 @@
 (defmethod ./Dyadic ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'./Dyadic arg2 (get-content arg1))))
 
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
 (defmethod ./Dyadic ((arg1 tensor-lst) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'./Dyadic (get-content arg1) (get-content arg2))))
+    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+        (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'./Dyadic (get-content arg1) (get-content arg2)))
+        nil))
 
 
 ;.// Same as the previous one, but using integer division. 
@@ -463,9 +474,10 @@
 (defmethod .// ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.// arg2 (get-content arg1))))
 
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
 (defmethod .// ((arg1 tensor-lst) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.// (get-content arg1) (get-content arg2))))
+    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+        (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.// (get-content arg1) (get-content arg2)))
+        nil))
 
 
 ;.% Same as the previous one, but using the remainder of 
@@ -480,9 +492,10 @@
 (defmethod .% ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.% arg2 (get-content arg1))))
 
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
 (defmethod .% ((arg1 tensor-lst) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.% (get-content arg1) (get-content arg2))))
+    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+        (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.% (get-content arg1) (get-content arg2)))
+        nil))
 
 
 ;.< Same as the previous one, but using the relation “less than.”
@@ -499,9 +512,10 @@
 (defmethod .< ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.< arg2 (get-content arg1))))
 
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
 (defmethod .< ((arg1 tensor-lst) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.< (get-content arg1) (get-content arg2))))
+    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+        (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.< (get-content arg1) (get-content arg2)))
+        nil))
 
 
 ;.> Same as the previous one, but using the relation “greater than.”
@@ -517,9 +531,10 @@
 (defmethod .> ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.> arg2 (get-content arg1))))
 
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
 (defmethod .> ((arg1 tensor-lst) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.> (get-content arg1) (get-content arg2))))
+    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+        (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.> (get-content arg1) (get-content arg2)))
+        nil))
 
 
 ;.<= Same as the previous one, but using the relation “less 
@@ -536,9 +551,10 @@
 (defmethod .<= ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.<= arg2 (get-content arg1))))
 
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
 (defmethod .<= ((arg1 tensor-lst) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.<= (get-content arg1) (get-content arg2))))
+    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+        (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.<= (get-content arg1) (get-content arg2)))
+        nil))
 
 
 ;.>= Same as the previous one, but using the relation “greater 
@@ -555,9 +571,10 @@
 (defmethod .>= ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.>= arg2 (get-content arg1))))
 
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
 (defmethod .>= ((arg1 tensor-lst) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.>= (get-content arg1) (get-content arg2))))
+    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+        (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.>= (get-content arg1) (get-content arg2)))
+        nil))
 
 
 ;.= Same as the previous one, but using the relation “equal to.” 
@@ -573,9 +590,11 @@
 (defmethod .= ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.= arg2 (get-content arg1))))
 
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
 (defmethod .= ((arg1 tensor-lst) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.= (get-content arg1) (get-content arg2))))
+    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+        (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.= (get-content arg1) (get-content arg2)))
+        nil))
+
 
 ;.or Same as the previous one, but using the logical disjunction.
 (defgeneric .or (arg1 arg2))
@@ -594,9 +613,10 @@
 (defmethod .or ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.or arg2 (get-content arg1))))
 
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
 (defmethod .or ((arg1 tensor-lst) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.or (get-content arg1) (get-content arg2))))
+    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+        (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.or (get-content arg1) (get-content arg2)))
+        nil))
 
 
 ;.and Same as the previous one, but using the logical conjunction. 
@@ -616,9 +636,12 @@
 (defmethod .and ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.and arg2 (get-content arg1))))
 
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+;(define-condition a-condition-with-no-handler (condition) ())
+
 (defmethod .and ((arg1 tensor-lst) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.and (get-content arg1) (get-content arg2))))
+    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+        (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.and (get-content arg1) (get-content arg2)))
+        nil))
 
 
 
