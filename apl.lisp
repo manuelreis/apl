@@ -16,7 +16,7 @@
 (defmethod get-content ((object tensor))
     (slot-value object 'slot-content))
 
-(defun s (arg) (make-instance 'tensor-scalar :init-val arg))
+(defmethod s ((arg number)) (make-instance 'tensor-scalar :init-val arg))
 
 (defun v (&rest args)
     (defun v-aux (lst)
@@ -24,6 +24,19 @@
             '()
             (cons (s (car lst)) (v-aux (cdr lst)))))
     (make-instance 'tensor-lst :init-val (v-aux args)))
+
+(defmethod hard-tensor-copy ((tnsr tensor-scalar))
+    (s (get-content tnsr)))
+
+(defmethod hard-tensor-copy ((tnsr tensor-lst))
+    (defun hard-tensor-copy-recursive (lst)
+        (if (null lst)
+            lst
+            (cons (hard-tensor-copy (car lst)) (hard-tensor-copy-recursive (cdr lst)))))
+    (let ((v-tnsr (tensor-to-vector tnsr)))
+        (reshape
+            (shape tnsr)
+            (v-from-lst (hard-tensor-copy-recursive (get-content v-tnsr))))))
 
 (defgeneric get-scalar-from-pos (tnsr temp-coords))
 (defmethod get-scalar-from-pos ((tnsr tensor-lst) (temp-coords tensor-lst))
@@ -101,12 +114,15 @@
 (defgeneric shape (tnsr))
 (defmethod shape ((tnsr tensor-scalar))
     NIL)
-(defmethod shape ((tnsr tensor-lst))
-    (hack-dims
-        (let ((dimension (shape (car (get-content tnsr)))))
+(defmethod shape-aux ((tnsr tensor-scalar))
+    NIL)
+(defmethod shape-aux ((tnsr tensor-lst))
+    (let ((dimension (shape-aux (car (get-content tnsr)))))
             (if (null dimension)
                 (v-from-lst (list (s (list-length (get-content tnsr)))))
-                (v-from-lst (append (get-content dimension) (list (s (list-length (get-content tnsr))))))))))
+                (v-from-lst (append (get-content dimension) (list (s (list-length (get-content tnsr)))))))))
+(defmethod shape ((tnsr tensor-lst))
+    (hack-dims (shape-aux tnsr)))
 
 ;interval - Creates a vector containing an enumeration
 ;           of all integers starting from 1 up to the
