@@ -25,6 +25,23 @@
             (cons (s (car lst)) (v-aux (cdr lst)))))
     (make-instance 'tensor-lst :init-val (v-aux args)))
 
+(defgeneric get-scalar-from-pos (tnsr temp-coords))
+(defmethod get-scalar-from-pos ((tnsr tensor-lst) (temp-coords tensor-lst))
+    (let ((result tnsr)
+            (coords (v-from-lst (nreverse (get-content (hack-dims temp-coords))))))
+        (dolist (dim-pos (get-content coords))
+            (setq result (nth (1- (get-content dim-pos)) (get-content result))))
+        result))
+
+(defgeneric set-scalar-from-pos (tnsr temp-coords scalar))
+(defmethod set-scalar-from-pos ((tnsr tensor-lst) (temp-coords tensor-lst) (scalar tensor-scalar))
+    (let ((result tnsr)
+            (coords (v-from-lst (nreverse (get-content (hack-dims temp-coords))))))
+        (dolist (dim-pos (get-content coords))
+            (setq result (nth (1- (get-content dim-pos)) (get-content result))))
+        (setf (slot-value result 'slot-content) (get-content scalar))
+        result))
+
 (defun v-from-lst (lst)
     (make-instance 'tensor-lst :init-val lst))
 
