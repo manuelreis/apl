@@ -16,7 +16,7 @@
 (defmethod get-content ((object tensor))
     (slot-value object 'slot-content))
 
-(defun s (arg) (make-instance 'tensor-scalar :init-val arg))
+(defmethod s ((arg number)) (make-instance 'tensor-scalar :init-val arg))
 
 (defun v (&rest args)
     (defun v-aux (lst)
@@ -24,6 +24,36 @@
             '()
             (cons (s (car lst)) (v-aux (cdr lst)))))
     (make-instance 'tensor-lst :init-val (v-aux args)))
+
+(defmethod hard-tensor-copy ((tnsr tensor-scalar))
+    (s (get-content tnsr)))
+
+(defmethod hard-tensor-copy ((tnsr tensor-lst))
+    (defun hard-tensor-copy-recursive (lst)
+        (if (null lst)
+            lst
+            (cons (hard-tensor-copy (car lst)) (hard-tensor-copy-recursive (cdr lst)))))
+    (let ((v-tnsr (tensor-to-vector tnsr)))
+        (reshape
+            (shape tnsr)
+            (v-from-lst (hard-tensor-copy-recursive (get-content v-tnsr))))))
+
+(defgeneric get-scalar-from-pos (tnsr temp-coords))
+(defmethod get-scalar-from-pos ((tnsr tensor-lst) (temp-coords tensor-lst))
+    (let ((result tnsr)
+            (coords (v-from-lst (nreverse (get-content (hack-dims temp-coords))))))
+        (dolist (dim-pos (get-content coords))
+            (setq result (nth (1- (get-content dim-pos)) (get-content result))))
+        result))
+
+(defgeneric set-scalar-from-pos (tnsr temp-coords scalar))
+(defmethod set-scalar-from-pos ((tnsr tensor-lst) (temp-coords tensor-lst) (scalar tensor-scalar))
+    (let ((result tnsr)
+            (coords (v-from-lst (nreverse (get-content (hack-dims temp-coords))))))
+        (dolist (dim-pos (get-content coords))
+            (setq result (nth (1- (get-content dim-pos)) (get-content result))))
+        (setf (slot-value result 'slot-content) (get-content scalar))
+        result))
 
 (defun v-from-lst (lst)
     (make-instance 'tensor-lst :init-val lst))
@@ -53,6 +83,22 @@
 (defmethod PRINT-OBJECT ((object tensor-lst) stream)
     (format stream (cdr (PRINT-OBJECT-STRING object))))
 
+(defmethod tensor-to-vector ((tnsr tensor-lst))
+    (v-from-lst (tensor-to-vector-aux tnsr)))
+(defmethod tensor-to-vector-aux ((tnsr tensor-scalar))
+    (list tnsr))
+(defmethod tensor-to-vector-aux ((tnsr tensor-lst))
+    (let ((temp NIL)
+        (lst NIL))
+        (if tnsr
+            (progn
+                (setq temp (tensor-to-vector-aux (car (get-content tnsr))))
+                (setq lst (append lst temp))
+                (if (cdr (get-content tnsr))
+                    (progn
+                        (setq lst (append lst (tensor-to-vector-aux (v-from-lst (cdr (get-content tnsr)))))) ))))
+        lst))
+
 (defmethod hack-dims ((dims tensor-lst))
     (let ((lst (get-content dims)))
         (v-from-lst (if (> (list-length lst) 1)
@@ -68,12 +114,15 @@
 (defgeneric shape (tnsr))
 (defmethod shape ((tnsr tensor-scalar))
     NIL)
-(defmethod shape ((tnsr tensor-lst))
-    (hack-dims
-        (let ((dimension (shape (car (get-content tnsr)))))
+(defmethod shape-aux ((tnsr tensor-scalar))
+    NIL)
+(defmethod shape-aux ((tnsr tensor-lst))
+    (let ((dimension (shape-aux (car (get-content tnsr)))))
             (if (null dimension)
                 (v-from-lst (list (s (list-length (get-content tnsr)))))
-                (v-from-lst (append (get-content dimension) (list (s (list-length (get-content tnsr))))))))))
+                (v-from-lst (append (get-content dimension) (list (s (list-length (get-content tnsr)))))))))
+(defmethod shape ((tnsr tensor-lst))
+    (hack-dims (shape-aux tnsr)))
 
 ;interval - Creates a vector containing an enumeration
 ;           of all integers starting from 1 up to the
@@ -124,7 +173,17 @@
 ;                from the first and second tensors.
 (defgeneric outer-product (func))
 (defmethod outer-product ((func function))
-    func)
+    (defun outer-product-aux (tnsr1 tnsr2)
+        (let ((shape1 (get-content (shape tnsr1)))
+                (shape2 (get-content (shape tnsr2)))
+                (v-tnsr1 (tensor-to-vector tnsr1))
+                (v-tnsr2 (tensor-to-vector tnsr2))
+                (result NIL))
+            (dolist (element1 (get-content v-tnsr1))
+                (dolist (element2 (get-content v-tnsr2))
+                    (setq result (append result (list (funcall func element1 element2))))))
+            (reshape (v-from-lst (append shape2 shape1)) (v-from-lst result))))
+    #'outer-product-aux)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -225,6 +284,336 @@
     (progn (setf  fill-data-var fill-data)
         (reshape-aux (hack-dims dims))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;; ANA RITA DA COSTA PEREIRA ;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;; MONADIC FUNCTIONS ;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun .- (arg1 &optional arg2)
+    (if (null arg2)
+        (.-Monadic arg1)
+        (.-Dyadic arg1 arg2)))
+
+(defun ./ (arg1 &optional arg2)
+    (if (null arg2)
+        (./Monadic arg1)
+        (./Dyadic arg1 arg2)))
+
+(defun monadic-tns (func arg)
+    (if (null arg)
+        (list)
+        (cons (funcall func (car arg)) (monadic-tns func (cdr arg)))))
+
+;.- Creates a tensor whose elements are the symmetric 
+;of the corresponding elements of the argument tensor. 
+(defgeneric .-Monadic (arg))
+(defmethod .-Monadic ((arg tensor-scalar))
+    (make-instance 'tensor-scalar :init-val (- 0 (get-content arg))))
+
+(defmethod .-Monadic ((arg tensor-lst))
+    (make-instance 'tensor-lst :init-val (monadic-tns #'.-Monadic (get-content arg))))
+
+
+;./ Same as the previous one, but using the inverse. 
+(defgeneric ./Monadic (arg))
+(defmethod ./Monadic ((arg tensor-scalar))
+    (make-instance 'tensor-scalar :init-val (/ 1 (get-content arg))))
+
+(defmethod ./Monadic ((arg tensor-lst))
+    (make-instance 'tensor-lst :init-val (monadic-tns #'./ (get-content arg))))
+
+;.! Same as the previous one, but using the factorial.
+(defgeneric .! (arg))
+(defmethod .! ((arg tensor-scalar))
+    (make-instance 'tensor-scalar :init-val (! (get-content arg))))
+
+(defmethod .! ((arg tensor-lst))
+    (make-instance 'tensor-lst :init-val (monadic-tns #'.! (get-content arg))))
+
+;.sin Same as the previous one, but using the sin function. 
+(defgeneric .sin (arg))
+(defmethod .sin ((arg tensor-scalar))
+    (make-instance 'tensor-scalar :init-val (sin (get-content arg))))
+
+(defmethod .sin ((arg tensor-lst))
+    (make-instance 'tensor-lst :init-val (monadic-tns #'.sin (get-content arg))))
+
+
+;.cos Same as the previous one, but using the cos function. 
+(defgeneric .cos (arg))
+(defmethod .cos ((arg tensor-scalar))
+    (make-instance 'tensor-scalar :init-val (cos (get-content arg))))
+
+(defmethod .cos ((arg tensor-lst))
+    (make-instance 'tensor-lst :init-val (monadic-tns #'.cos (get-content arg))))
+
+
+;.not Same as the previous one, but using the negation. 
+;The result is a tensor containing, as elements, the integers 
+;0 or 1, depending on the corresponding element in the 
+;argument tensor being different that zero or equal to zero.
+(defgeneric .not (arg))
+(defmethod .not ((arg tensor-scalar))
+    (if (= (get-content arg) 0)
+        (make-instance 'tensor-scalar :init-val 1)
+        (make-instance 'tensor-scalar :init-val 0)))
+
+(defmethod .not ((arg tensor-lst))
+    (make-instance 'tensor-lst :init-val (monadic-tns #'.not (get-content arg))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;; DYATIC FUNCTIONS ;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun dyadic-tns-tns (func lst1 lst2)
+    (if (null lst1)
+        (list)
+        (cons (funcall func (car lst1) (car lst2)) (dyadic-tns-tns func (cdr lst1) (cdr lst2)))))
+
+(defun dyadic-tns-scalar (func int lst)
+    (if (null lst)
+        (list)
+        (cons (funcall func int (car lst)) (dyadic-tns-scalar func int (cdr lst)))))
+
+
+;.+ Creates a tensor with the sum of the corresponding 
+;elements of the argument tensors.
+(defgeneric .+ (arg1 arg2))
+(defmethod .+ ((arg1 tensor-scalar) (arg2 tensor-scalar))
+    (make-instance 'tensor-scalar :init-val (+ (get-content arg1) (get-content arg2))))
+
+(defmethod .+ ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.+ arg1 (get-content arg2))))
+
+(defmethod .+ ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.+ arg2 (get-content arg1))))
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+(defmethod .+ ((arg1 tensor-lst) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.+ (get-content arg1) (get-content arg2))))
+
+
+;.- Same as the previous one, but using subtraction.
+(defgeneric .-Dyadic (arg1 arg2))
+(defmethod .-Dyadic ((arg1 tensor-scalar) (arg2 tensor-scalar))
+    (make-instance 'tensor-scalar :init-val (- (get-content arg1) (get-content arg2))))
+
+(defmethod .-Dyadic ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.-Dyadic arg1 (get-content arg2))))
+
+(defmethod .-Dyadic ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.-Dyadic arg2 (get-content arg1))))
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+(defmethod .-Dyadic ((arg1 tensor-lst) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.-Dyadic (get-content arg1) (get-content arg2))))
+
+
+;.* Same as the previous one, but using multiplication. 
+(defgeneric .* (arg1 arg2))
+(defmethod .* ((arg1 tensor-scalar) (arg2 tensor-scalar))
+    (make-instance 'tensor-scalar :init-val (* (get-content arg1) (get-content arg2))))
+
+(defmethod .* ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.* arg1 (get-content arg2))))
+
+(defmethod .* ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.* arg2 (get-content arg1))))
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+(defmethod .* ((arg1 tensor-lst) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.* (get-content arg1) (get-content arg2))))
+
+
+;./ Same as the previous one, but using division. 
+(defgeneric ./Dyadic (arg1 arg2))
+(defmethod ./Dyadic ((arg1 tensor-scalar) (arg2 tensor-scalar))
+   (make-instance 'tensor-scalar :init-val (/ (get-content arg1) (get-content arg2))))
+
+(defmethod ./Dyadic ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'./Dyadic arg1 (get-content arg2))))
+
+(defmethod ./Dyadic ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'./Dyadic arg2 (get-content arg1))))
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+(defmethod ./Dyadic ((arg1 tensor-lst) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'./Dyadic (get-content arg1) (get-content arg2))))
+
+
+;.// Same as the previous one, but using integer division. 
+(defgeneric .// (arg1 arg2))
+(defmethod .// ((arg1 tensor-scalar) (arg2 tensor-scalar))
+    (make-instance 'tensor-scalar :init-val (floor (get-content arg1) (get-content arg2))))
+
+(defmethod .// ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.// arg1 (get-content arg2))))
+
+(defmethod .// ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.// arg2 (get-content arg1))))
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+(defmethod .// ((arg1 tensor-lst) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.// (get-content arg1) (get-content arg2))))
+
+
+;.% Same as the previous one, but using the remainder of 
+;the integer division. 
+(defgeneric .% (arg1 arg2))
+(defmethod .% ((arg1 tensor-scalar) (arg2 tensor-scalar))
+    (make-instance 'tensor-scalar :init-val (nth-value 1 (floor (get-content arg1) (get-content arg2)))))
+
+(defmethod .% ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.% arg1 (get-content arg2))))
+
+(defmethod .% ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.% arg2 (get-content arg1))))
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+(defmethod .% ((arg1 tensor-lst) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.% (get-content arg1) (get-content arg2))))
+
+
+;.< Same as the previous one, but using the relation “less than.”
+;The result tensor will have, as elements, the integers 0 or 1.
+(defgeneric .< (arg1 arg2))
+(defmethod .< ((arg1 tensor-scalar) (arg2 tensor-scalar))
+    (if (< (get-content arg1) (get-content arg2))
+        (make-instance 'tensor-scalar :init-val 1)
+        (make-instance 'tensor-scalar :init-val 0)))
+
+(defmethod .< ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.< arg1 (get-content arg2))))
+
+(defmethod .< ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.< arg2 (get-content arg1))))
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+(defmethod .< ((arg1 tensor-lst) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.< (get-content arg1) (get-content arg2))))
+
+
+;.> Same as the previous one, but using the relation “greater than.”
+(defgeneric .> (arg1 arg2))
+(defmethod .> ((arg1 tensor-scalar) (arg2 tensor-scalar))
+    (if (> (get-content arg1) (get-content arg2))
+        (make-instance 'tensor-scalar :init-val 1)
+        (make-instance 'tensor-scalar :init-val 0)))
+
+(defmethod .> ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.> arg1 (get-content arg2))))
+
+(defmethod .> ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.> arg2 (get-content arg1))))
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+(defmethod .> ((arg1 tensor-lst) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.> (get-content arg1) (get-content arg2))))
+
+
+;.<= Same as the previous one, but using the relation “less 
+;than or equal to.” 
+(defgeneric .<= (arg1 arg2))
+(defmethod .<= ((arg1 tensor-scalar) (arg2 tensor-scalar))
+    (if (<= (get-content arg1) (get-content arg2))
+        (make-instance 'tensor-scalar :init-val 1)
+        (make-instance 'tensor-scalar :init-val 0)))
+
+(defmethod .<= ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.<= arg1 (get-content arg2))))
+
+(defmethod .<= ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.<= arg2 (get-content arg1))))
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+(defmethod .<= ((arg1 tensor-lst) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.<= (get-content arg1) (get-content arg2))))
+
+
+;.>= Same as the previous one, but using the relation “greater 
+;than or equal to.” 
+(defgeneric .>= (arg1 arg2))
+(defmethod .>= ((arg1 tensor-scalar) (arg2 tensor-scalar))
+    (if (>= (get-content arg1) (get-content arg2))
+        (make-instance 'tensor-scalar :init-val 1)
+        (make-instance 'tensor-scalar :init-val 0)))
+
+(defmethod .>= ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.>= arg1 (get-content arg2))))
+
+(defmethod .>= ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.>= arg2 (get-content arg1))))
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+(defmethod .>= ((arg1 tensor-lst) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.>= (get-content arg1) (get-content arg2))))
+
+
+;.= Same as the previous one, but using the relation “equal to.” 
+(defgeneric .= (arg1 arg2))
+(defmethod .= ((arg1 tensor-scalar) (arg2 tensor-scalar))
+    (if (= (get-content arg1) (get-content arg2))
+        (make-instance 'tensor-scalar :init-val 1)
+        (make-instance 'tensor-scalar :init-val 0)))
+
+(defmethod .= ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.= arg1 (get-content arg2))))
+
+(defmethod .= ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.= arg2 (get-content arg1))))
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+(defmethod .= ((arg1 tensor-lst) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.= (get-content arg1) (get-content arg2))))
+
+;.or Same as the previous one, but using the logical disjunction.
+(defgeneric .or (arg1 arg2))
+(defmethod .or ((arg1 tensor-scalar) (arg2 tensor-scalar))
+    (let ((result nil))
+    (cond ((and (= 0 (get-content arg1)) (= 0 (get-content arg2))) (setf result 0))
+        ((and (= 0 (get-content arg1)) (= 1 (get-content arg2))) (setf result 1))        
+        ((and (= 1 (get-content arg1)) (= 0 (get-content arg2))) (setf result 1))
+        ((and (= 1 (get-content arg1)) (= 1 (get-content arg2))) (setf result 1))
+        (t nil))
+    (make-instance 'tensor-scalar :init-val result)))
+
+(defmethod .or ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.or arg1 (get-content arg2))))
+
+(defmethod .or ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.or arg2 (get-content arg1))))
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+(defmethod .or ((arg1 tensor-lst) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.or (get-content arg1) (get-content arg2))))
+
+
+;.and Same as the previous one, but using the logical conjunction. 
+(defgeneric .and (arg1 arg2))
+(defmethod .and ((arg1 tensor-scalar) (arg2 tensor-scalar))
+    (let ((result nil))
+    (cond ((and (= 0 (get-content arg1)) (= 0 (get-content arg2))) (setf result 0))
+        ((and (= 0 (get-content arg1)) (= 1 (get-content arg2))) (setf result 0))        
+        ((and (= 1 (get-content arg1)) (= 0 (get-content arg2))) (setf result 0))
+        ((and (= 1 (get-content arg1)) (= 1 (get-content arg2))) (setf result 1))
+        (t nil))
+    (make-instance 'tensor-scalar :init-val result)))
+
+(defmethod .and ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.and arg1 (get-content arg2))))
+
+(defmethod .and ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.and arg2 (get-content arg1))))
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SHAPE
+(defmethod .and ((arg1 tensor-lst) (arg2 tensor-lst))
+    (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.and (get-content arg1) (get-content arg2))))
 
 
 
