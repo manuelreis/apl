@@ -229,6 +229,9 @@
 (defun all-equal(lst value)
 	(all-equal-aux lst value T))
 
+(defun dim-rescale (d num-dims)
+	(+ (- num-dims d) 1))
+
 ;drop -	Accepts a scalar n1 or vector (of elements ni) and a non-scalar tensor and
 ;		returns a tensor where the first (if n > 0) or last (if n < 0) n elements of
 ;		the i dimension of the tensor were removed.
@@ -241,19 +244,21 @@
 			((> n 0) (drop (s (- n 1)) (v-from-lst (rest (get-content tnsr )))))       
 			(t (drop (s (+ n 1)) (v-from-lst (butlast (get-content tnsr))))))))
 
-
-(defmethod drop ((n1 tensor-lst) (tnsr1 tensor))
-	(drop-aux (hack-dims n1) tnsr1))
-
-(defun drop-aux  (n1 tnsr1)
+(defun drop-aux (n1 tnsr1)
 	(if (all-equal n1 0)
 				tnsr1
 				(let* ((new_dim_n (get-dim-and-n n1))
 						(new-n1 (car new_dim_n))
 						(n_els (second new_dim_n))
 						(dim (third new_dim_n))
-						(new-tnsr (v-from-lst (remove-lists-dim tnsr1 n_els dim))))
-					(drop new-n1 new-tnsr))))
+						(dim-rescaled (dim-rescale dim (list-length (get-content new-n1))))
+						(new-tnsr (v-from-lst (remove-lists-dim tnsr1 n_els dim-rescaled))))
+					(drop-aux new-n1 new-tnsr))))
+
+(defmethod drop ((n1 tensor-lst) (tnsr1 tensor))
+	(drop-aux (hack-dims n1) tnsr1))
+
+
 
 ;reshape - Returns a tensor with the dimensions refered in the first argument,
 ;          whose elements are taken from the second argument, repeating them if
