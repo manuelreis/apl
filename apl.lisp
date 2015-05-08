@@ -184,14 +184,17 @@
 
 
 (defmethod drop ((n1 tensor-lst) (tnsr1 tensor))
-		(if (all-equal n1 0)
-			tnsr1
-			(let* ((new_dim_n (get-dim-and-n n1))
-					(new-n1 (car new_dim_n))
-					(n_els (second new_dim_n))
-					(dim (third new_dim_n))
-					(new-tnsr (v-from-lst (remove-lists-dim tnsr1 n_els dim))))
-				(drop new-n1 new-tnsr))))
+	(drop-aux (hack-dims n1) tnsr1))
+
+(defun drop-aux  (n1 tnsr1)
+	(if (all-equal n1 0)
+				tnsr1
+				(let* ((new_dim_n (get-dim-and-n n1))
+						(new-n1 (car new_dim_n))
+						(n_els (second new_dim_n))
+						(dim (third new_dim_n))
+						(new-tnsr (v-from-lst (remove-lists-dim tnsr1 n_els dim))))
+					(drop new-n1 new-tnsr))))
 
 ;reshape - Returns a tensor with the dimensions refered in the first argument,
 ;          whose elements are taken from the second argument, repeating them if
