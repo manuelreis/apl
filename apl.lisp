@@ -53,6 +53,11 @@
 (defmethod PRINT-OBJECT ((object tensor-lst) stream)
     (format stream (cdr (PRINT-OBJECT-STRING object))))
 
+(defmethod hack-dims ((dims tensor-lst))
+    (let ((lst (get-content dims)))
+        (v-from-lst (if (> (list-length lst) 1)
+            (list* (second lst) (first lst) (cddr lst))
+            lst))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;; CARLOS ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -64,10 +69,11 @@
 (defmethod shape ((tnsr tensor-scalar))
     NIL)
 (defmethod shape ((tnsr tensor-lst))
-    (let ((dimension (shape (car (get-content tnsr))))) 
-        (if (null dimension)
-            (v-from-lst (list (s (list-length (get-content tnsr)))))
-            (v-from-lst (append (get-content dimension) (list (s (list-length (get-content tnsr)))))))))
+    (hack-dims
+        (let ((dimension (shape (car (get-content tnsr)))))
+            (if (null dimension)
+                (v-from-lst (list (s (list-length (get-content tnsr)))))
+                (v-from-lst (append (get-content dimension) (list (s (list-length (get-content tnsr))))))))))
 
 ;interval - Creates a vector containing an enumeration
 ;           of all integers starting from 1 up to the
@@ -214,7 +220,7 @@
 
 (defmethod reshape ((dims tensor-lst) (fill-data tensor-lst))
     (progn (setf  fill-data-var fill-data)
-    	(reshape-aux dims)))
+        (reshape-aux (hack-dims dims))))
 
 
 
