@@ -290,6 +290,29 @@
         (reshape-aux (hack-dims dims))))
 
 
+;catenate - If the two arguments are scalars, returns a vector containing those
+;			arguments. If the two arguments are tensors, returns a tensor that joins
+;			the arguments along the their last dimension.
+
+
+(defgeneric catenate (arg1 arg2))
+
+(defun catenate-aux (arg1 arg2)
+	(let ((arg1-c (get-content arg1))
+		  (arg2-c (get-content arg2)))
+		(if (= (list-length arg1-c) 1)
+			(v-from-lst (append (get-content (car arg1-c))  (get-content (car arg2-c)) ))
+			(v-from-lst (append (list (v-from-lst (append (get-content (car arg1-c)) (get-content (car arg2-c)))) 
+									  (catenate-aux  (v-from-lst (rest arg1-c)) (v-from-lst (rest arg2-c)))))))))
+
+(defmethod catenate ((arg1 tensor-lst) (arg2 tensor-lst))
+	(let ((arg1-c (get-content arg1))
+		  (arg2-c (get-content arg2)))
+			(if (= (list-length (get-content (shape arg1))) 2)
+				(catenate-aux arg1 arg2)
+				(v-from-lst (append arg1-c arg2-c)))))
+ 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
