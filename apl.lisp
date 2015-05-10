@@ -105,6 +105,14 @@
             (list* (second lst) (first lst) (cddr lst))
             lst))))
 
+(defun flatten (mylist)
+  (cond
+   ((null mylist) nil)
+   ((atom mylist) (list mylist))
+   (t
+    (append (flatten (car mylist)) (flatten (cdr mylist))))))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;; CARLOS ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -311,7 +319,51 @@
 			(if (= (list-length (get-content (shape arg1))) 2)
 				(catenate-aux arg1 arg2)
 				(v-from-lst (append arg1-c arg2-c)))))
+
+
+;member? - Returns a tensor of booleans with the same shape and dimension of the
+; 			first argument, containing 1 for each element in the corresponding location
+; 			in the first argument that occurs somewhere in the second argument and
+; 			0 otherwise.
+
+
+
+(defun generate-all-pos-from-shape-aux (shp pos)
+	(if (= 0 (list-length shp))
+		(v-from-lst pos) 
+		(let ((limit (get-content (car shp))))
+				 	(loop for pos_i in (get-content (interval limit)) 
+						collect (generate-all-pos-from-shape-aux (rest shp) (append pos (list pos_i)))))))
+
+(defun generate-all-pos-from-shape (shp)
+	(let ((shp-ct (get-content shp)))
+		(flatten (generate-all-pos-from-shape-aux shp-ct '()))))
+
+
+(defgeneric member? (tnsr elems))
  
+(defmethod member? ((tnsr tensor-scalar) (elems tensor-lst)) 
+	(let* ((elems-vec (get-content (tensor-to-vector elems)))
+		  (rest-elems-vec (rest elems-vec)))
+			(if (= (get-content tnsr) (get-content (car elems-vec)))
+				1
+				(if (= (list-length rest-elems-vec) 0)
+					0
+					(member? tnsr (v-from-lst rest-elems-vec))))))
+
+
+(defmethod member? ((tnsr tensor-lst) (elems tensor-lst))
+	(let ((new-tnsr (hard-tensor-copy tnsr))
+		 (shp (shape tnsr)))
+			(dolist (pos (generate-all-pos-from-shape shp))
+		 		(let* ((result (get-scalar-from-pos tnsr pos))
+		 			  (is-member (s (member? result elems))))
+		 			(set-scalar-from-pos new-tnsr pos is-member)))
+				new-tnsr))
+
+		 		
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
