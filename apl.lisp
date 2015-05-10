@@ -105,13 +105,23 @@
             (list* (second lst) (first lst) (cddr lst))
             lst))))
 
+;queria isto mas vendo a class! é possivel?
+(defun tnsr-lst? (tnsr)
+    (if (eq (type-of tnsr) 'tensor-lst)
+        t
+        nil))
+
+(defun tnsr-scalar? (tnsr)
+    (if (eq (type-of tnsr) 'tensor-scalar)
+        t
+        nil))
+
 (defun flatten (mylist)
   (cond
    ((null mylist) nil)
    ((atom mylist) (list mylist))
    (t
     (append (flatten (car mylist)) (flatten (cdr mylist))))))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;; CARLOS ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -711,17 +721,38 @@
 (defmethod .and ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.and arg2 (get-content arg1))))
 
-;(define-condition a-condition-with-no-handler (condition) ())
-
 (defmethod .and ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.and (get-content arg1) (get-content arg2)))
-        nil))
+        (error "TENSORS HAVE DIFFERENT DIMENSIONS")))
+
+;(define-condition a-condition-with-no-handler (condition) ())
+;DUVIDAS!!!! 
+;(1) basta fazer este error???! ou é preciso ser o signal?-> como é que funciona? 
+;(2) é preciso considerar outro tipo de errors. tipo se se tentar dividir por 0. ou se tentar fazer .and de nao binarios.
 
 
 
+;tally - given a tensor, returns a scalar with the number of elements of the tensor.
+(defgeneric tally (tnsr))
+(defmethod tally ((tnsr tensor-scalar))
+    (make-instance 'tensor-scalar :init-val 1))
 
-
+(defmethod tally ((tnsr tensor-lst))
+    (let* ((size-final 0))
+        (defun tally-aux (lst)
+            (let ((init 0)
+                  (size-lst (length lst)))
+                (if (tnsr-scalar? (nth init lst))
+                    (progn
+                        (setf size-final (+ size-final size-lst)))
+                    (progn
+                        (loop do (tally-aux (get-content (nth init lst)))
+                            (setf init (+ init 1))
+                            while (< init size-lst))))))
+    (progn 
+        (tally-aux (get-content tnsr))
+        (make-instance 'tensor-scalar :init-val size-final))))
 
 
 
