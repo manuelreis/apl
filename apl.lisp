@@ -739,20 +739,32 @@
     (make-instance 'tensor-scalar :init-val 1))
 
 (defmethod tally ((tnsr tensor-lst))
-    (let* ((size-final 0))
-        (defun tally-aux (lst)
-            (let ((init 0)
-                  (size-lst (length lst)))
-                (if (tnsr-scalar? (nth init lst))
-                    (progn
-                        (setf size-final (+ size-final size-lst)))
-                    (progn
-                        (loop do (tally-aux (get-content (nth init lst)))
-                            (setf init (+ init 1))
-                            while (< init size-lst))))))
-    (progn 
-        (tally-aux (get-content tnsr))
-        (make-instance 'tensor-scalar :init-val size-final))))
+    (make-instance 'tensor-scalar :init-val (length (get-content (tensor-to-vector tnsr)))))
+
+;ravel - given a tensor, returns a vector containing all the elements of the tensor.
+(defgeneric ravel (tnsr))
+(defmethod ravel ((tnsr tensor-scalar))
+    (make-instance 'tensor-lst :init-val (list tnsr)))
+
+(defmethod ravel ((tnsr tensor-lst))
+    (tensor-to-vector tnsr))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;ISTO é para o caso de ter de ser os inteiros. mas ainda nao está bem feito
+; ;ravel - given a tensor, returns a vector containing all the elements of the tensor.
+; (defgeneric ravel (tnsr))
+; (defmethod ravel ((tnsr tensor-scalar))
+;     (make-instance 'tensor-lst :init-val (get-content tnsr)))
+
+; (defmethod ravel ((tnsr tensor-lst))
+;     (defun ravel-aux (lst)
+;         (let ((final-lst (list)))
+;             (loop for x in lst
+;                 do (setf final-lst (append final-lst (list (get-content x)))))
+;         final-lst))
+;     (make-instance 'tensor-lst :init-val (ravel-aux (get-content (tensor-to-vector tnsr)))))
+
+
+
 
 
 
