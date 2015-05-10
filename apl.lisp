@@ -105,6 +105,17 @@
             (list* (second lst) (first lst) (cddr lst))
             lst))))
 
+;queria isto mas vendo a class! é possivel?
+(defun tnsr-lst? (tnsr)
+    (if (eq (type-of tnsr) 'tensor-lst)
+        t
+        nil))
+
+(defun tnsr-scalar? (tnsr)
+    (if (eq (type-of tnsr) 'tensor-scalar)
+        t
+        nil))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;; CARLOS ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -683,31 +694,14 @@
                   (size-lst (length lst)))
                 (if (tnsr-scalar? (nth init lst))
                     (progn
-                        (format nil "Achou que era escalar ~S~%." (nth init lst))
                         (setf size-final (+ size-final size-lst)))
                     (progn
-                        (format nil "Achou que era tensor ~S~%." (nth init lst))
-                        (format nil "chegou aqui e o init estava ~S~%." init)
-                        (format nil "chegou aqui e o size-lst estava ~S~%." size-lst)
-                        (format nil "chegou aqui e o size-final estava ~S~%." size-final)
                         (loop do (tally-aux (get-content (nth init lst)))
-                            while (< init size-lst))
-                        (setf init (+ init 1))))))
+                            (setf init (+ init 1))
+                            while (< init size-lst))))))
     (progn 
         (tally-aux (get-content tnsr))
         (make-instance 'tensor-scalar :init-val size-final))))
-
-
-;queria isto mas vendo a class! é possivel?
-(defun tnsr-lst? (tnsr)
-    (if (eq (type-of tnsr) 'tensor-lst)
-        t
-        nil))
-
-(defun tnsr-scalar? (tnsr)
-    (if (eq (type-of tnsr) 'tensor-scalar)
-        t
-        nil))
 
 
 
