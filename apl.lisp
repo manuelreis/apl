@@ -156,15 +156,11 @@
 (defgeneric shape (tnsr))
 (defmethod shape ((tnsr tensor-scalar))
     NIL)
-(defmethod shape-aux ((tnsr tensor-scalar))
-    NIL)
-(defmethod shape-aux ((tnsr tensor-lst))
-    (let ((dimension (shape-aux (car (get-content tnsr)))))
+(defmethod shape ((tnsr tensor-lst))
+    (let ((dimension (shape (car (get-content tnsr)))))
             (if (null dimension)
                 (v-from-lst (list (s (list-length (get-content tnsr)))))
-                (v-from-lst (append (get-content dimension) (list (s (list-length (get-content tnsr)))))))))
-(defmethod shape ((tnsr tensor-lst))
-    (hack-dims (shape-aux tnsr)))
+                (v-from-lst (append (list (s (list-length (get-content tnsr)))) (get-content dimension))))))
 
 ;interval - Creates a vector containing an enumeration
 ;           of all integers starting from 1 up to the
