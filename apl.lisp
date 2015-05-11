@@ -415,36 +415,30 @@
 ; 		  corresponding element in the first tensor is 1.
 
 
-(defun new-set-elems-and-index-to-remove-aux (elems new-elems index)
-	(if (= 0 (get-content (car elems)))
-		(list (v-from-lst (flatten (append (list new-elems) (rest elems)))) index)
-		(new-set-elems-and-index-to-remove-aux (rest elems) (append (list new-elems) (car elems)) (+ 1 index))))
+(defun get-pos-of-columns (lst)
+    (let ((res NIL))
+        (dotimes (i (length (get-content lst)))
+            (if (equal-tensor (s 1) (nth i (get-content lst)))
+                (setq res (append res (list i)))))
+        res))
 
-(defun new-set-elems-and-index-to-remove (elems)
-	(new-set-elems-and-index-to-remove-aux (get-content elems) '() 1))
-
-(defun select-columns (tnsr index)
-	(v-from-lst (map 'list #'(lambda (col) (v-from-lst (remove-nth (- index 1) (get-content col)))) (get-content tnsr))))
-
-(defun select-specific (tnsr index)
-	(if (= (list-length (get-content (shape tnsr))) 2)
-		(select-columns tnsr index)
-		(v-from-lst (remove-nth (- index 1) (get-content tnsr)))))
-
-(defun select (elems tnsr)
-	(cond  ((all-equal elems 1) tnsr)
-		   ((all-equal elems 0)  NIL)
-		 	(t (let* ((elems-and-idx (new-set-elems-and-index-to-remove elems))
-			   (new-elems (car elems-and-idx))
-			   (index (second elems-and-idx))
-			   (new-tnsr  (select-specific tnsr index)))
-					(if (all-equal new-elems 1)
-						new-tnsr
-						(select-general new-elems new-tnsr))))))
-
-
-
-
+(defgeneric select (vec tnsr))
+(defmethod select ((vec tensor-lst) (tnsr tensor-lst))
+    (if (null (get-pos-of-columns vec))
+        NIL
+        (if (eq 'tensor-scalar (type-of (car (get-content tnsr))))
+            (let ((res NIL))
+                (dolist (pos (get-pos-of-columns vec))
+                    (setq res (append res (list (nth pos (get-content tnsr))))))
+                (if (null res)
+                    res
+                    (v-from-lst res)))
+            (v-from-lst
+                (list*
+                    (select vec (car (get-content tnsr)))
+                    (if (null (cdr (get-content tnsr)))
+                        NIL
+                        (get-content (select vec (v-from-lst (cdr (get-content tnsr)))))))))))
 
 
 
