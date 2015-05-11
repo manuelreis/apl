@@ -25,6 +25,21 @@
             (cons (s (car lst)) (v-aux (cdr lst)))))
     (make-instance 'tensor-lst :init-val (v-aux args)))
 
+
+(defgeneric equal-tensor (tnsr1 tnsr2))
+(defmethod equal-tensor ((tnsr1 t) (tnsr2 t))
+    NIL)
+(defmethod equal-tensor ((tnsr1 tensor-lst) (tnsr2 tensor-lst))
+    (if (and (null (get-content tnsr1)) (null (get-content tnsr1)))
+        T
+        (and
+            (equal-tensor (car (get-content tnsr1)) (car (get-content tnsr2)))
+            (equal-tensor (v-from-lst (cdr (get-content tnsr1))) (v-from-lst (cdr (get-content tnsr2)))))))
+(defmethod equal-tensor ((tnsr1 tensor-scalar) (tnsr2 tensor-scalar))
+    (eq (get-content tnsr1) (get-content tnsr2)))
+
+
+(defgeneric hard-tensor-copy (tnsr))
 (defmethod hard-tensor-copy ((tnsr tensor-scalar))
     (s (get-content tnsr)))
 
@@ -100,10 +115,11 @@
         lst))
 
 (defmethod hack-dims ((dims tensor-lst))
-    (let ((lst (get-content dims)))
-        (v-from-lst (if (> (list-length lst) 1)
-            (list* (second lst) (first lst) (cddr lst))
-            lst))))
+    (v-from-lst (reverse (get-content dims))))
+    ; (let ((lst (reverse (get-content dims))))
+    ;     (v-from-lst (if (> (list-length lst) 1)
+    ;         (list* (second lst) (first lst) (cddr lst))
+    ;         lst))))
 
 ;queria isto mas vendo a class! é possivel?
 (defun tnsr-lst? (tnsr)
