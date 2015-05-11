@@ -123,6 +123,14 @@
    (t
     (append (flatten (car mylist)) (flatten (cdr mylist))))))
 
+(defun remove-nth (n list)
+  (declare
+    (type (integer 0) n)
+    (type list list))
+  (if (or (zerop n) (null list))
+    (cdr list)
+    (cons (car list) (remove-nth (1- n) (cdr list)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;; CARLOS ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -371,7 +379,41 @@
 		 			(set-scalar-from-pos new-tnsr pos is-member)))
 				new-tnsr))
 
-		 		
+;select - From a tensor of booleans and another tensor, returns a tensor containing
+;  		  only the elements of the last dimension of the second argument whose
+; 		  corresponding element in the first tensor is 1.
+
+
+(defun new-set-elems-and-index-to-remove-aux (elems new-elems index)
+	(if (= 0 (get-content (car elems)))
+		(list (v-from-lst (flatten (append (list new-elems) (rest elems)))) index)
+		(new-set-elems-and-index-to-remove-aux (rest elems) (append (list new-elems) (car elems)) (+ 1 index))))
+
+(defun new-set-elems-and-index-to-remove (elems)
+	(new-set-elems-and-index-to-remove-aux (get-content elems) '() 1))
+
+(defun select-columns (tnsr index)
+	(v-from-lst (map 'list #'(lambda (col) (v-from-lst (remove-nth (- index 1) (get-content col)))) (get-content tnsr))))
+
+(defun select-specific (tnsr index)
+	(if (= (list-length (get-content (shape tnsr))) 2)
+		(select-columns tnsr index)
+		(v-from-lst (remove-nth (- index 1) (get-content tnsr)))))
+
+(defun select (elems tnsr)
+	(cond  ((all-equal elems 1) tnsr)
+		   ((all-equal elems 0)  NIL)
+		 	(t (let* ((elems-and-idx (new-set-elems-and-index-to-remove elems))
+			   (new-elems (car elems-and-idx))
+			   (index (second elems-and-idx))
+			   (new-tnsr  (select-specific tnsr index)))
+					(if (all-equal new-elems 1)
+						new-tnsr
+						(select-general new-elems new-tnsr))))))
+
+
+
+
 
 
 
