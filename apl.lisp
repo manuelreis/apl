@@ -282,8 +282,10 @@
 
 (defmethod drop ((n1 tensor-scalar) (tnsr tensor))
 	(let ((n (get-content n1)))
-		(cond ((= n 0) tnsr)
-			((> n 0) (drop (s (- n 1)) (v-from-lst (rest (get-content tnsr )))))       
+		(cond 
+			((null (get-content tnsr)) NIL) 
+			((= n 0) tnsr)
+			((> n 0) (drop (s (- n 1)) (v-from-lst (rest (get-content tnsr )))))
 			(t (drop (s (+ n 1)) (v-from-lst (butlast (get-content tnsr))))))))
 
 (defun drop-aux (n1 tnsr1)
@@ -339,20 +341,27 @@
 
 (defgeneric catenate (arg1 arg2))
 
-(defun catenate-aux (arg1 arg2)
-	(let ((arg1-c (get-content arg1))
-		  (arg2-c (get-content arg2)))
-		(if (= (list-length arg1-c) 1)
-			(v-from-lst (append (get-content (car arg1-c))  (get-content (car arg2-c)) ))
-			(v-from-lst (append (list (v-from-lst (append (get-content (car arg1-c)) (get-content (car arg2-c)))) 
-									  (catenate-aux  (v-from-lst (rest arg1-c)) (v-from-lst (rest arg2-c)))))))))
+(defun catenate-aux (arg1-vec arg2-vec n-cols-arg1 n-cols-arg2 vec-final)
+	(if (and (= 0 (list-length arg1-vec)) (= 0 (list-length arg2-vec)))
+		(v-from-lst vec-final)
+		(let* ((start-arg1-vec (subseq arg1-vec 0 n-cols-arg1))
+			  (start-arg2-vec (subseq arg2-vec 0 n-cols-arg2))
+			  (rest-arg1-vec (nthcdr n-cols-arg1 arg1-vec))
+			  (rest-arg2-vec (nthcdr n-cols-arg2 arg2-vec))
+			  (new-vec-final (append vec-final start-arg1-vec start-arg2-vec)))
+				(catenate-aux rest-arg1-vec rest-arg2-vec n-cols-arg1 n-cols-arg2 new-vec-final))))
 
-(defmethod catenate ((arg1 tensor-lst) (arg2 tensor-lst))
-	(let ((arg1-c (get-content arg1))
-		  (arg2-c (get-content arg2)))
-			(if (= (list-length (get-content (shape arg1))) 2)
-				(catenate-aux arg1 arg2)
-				(v-from-lst (append arg1-c arg2-c)))))
+(defmethod catenate ((arg1 tensor-lst) (arg2 tensor-lst))	
+	(let* ((arg1-vec (get-content (tensor-to-vector arg1)))
+		   (arg2-vec (get-content (tensor-to-vector arg2)))
+		   (n-cols-arg1 (get-content (car (last (get-content (shape arg1))))))
+		   (n-cols-arg2 (get-content (car (last (get-content (shape arg2))))))
+		   (final-shape-without-cols (reverse (rest (reverse (get-content (shape arg1))))))
+		   (final-shape (v-from-lst (append final-shape-without-cols (list (s (+ n-cols-arg1 n-cols-arg2)))))))
+		(reshape final-shape (catenate-aux arg1-vec arg2-vec n-cols-arg1 n-cols-arg2 '()))))
+
+(defmethod catenate ((arg1 tensor-scalar) (arg2 tensor-scalar))
+	(v (get-content arg1) (get-content arg2)))
 
 
 ;member? - Returns a tensor of booleans with the same shape and dimension of the
