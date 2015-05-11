@@ -252,9 +252,9 @@
 (defun remove-lists-dim-aux (lst n dim deep)
 	(let ((con-lst (get-content lst)))
 	(if (= deep dim)
-		(if (> n 0)
-			(nthcdr n con-lst)
-			(reverse (nthcdr (- 0 n) (reverse con-lst))))
+			(if (> n 0)
+				(nthcdr n con-lst)
+				(reverse (nthcdr (- 0 n) (reverse con-lst))))
 		(map 'list #'(lambda (sub-lst) (v-from-lst (remove-lists-dim-aux sub-lst n dim (+ deep 1)) ) ) con-lst)))) 		
 
 (defun remove-lists-dim(lst n dim) ;remove n ou -n listas na dim d
@@ -274,9 +274,13 @@
 (defun dim-rescale (d num-dims)
 	(+ (- num-dims d) 1))
 
+
 ;drop -	Accepts a scalar n1 or vector (of elements ni) and a non-scalar tensor and
 ;		returns a tensor where the first (if n > 0) or last (if n < 0) n elements of
 ;		the i dimension of the tensor were removed.
+
+(defun verify-equal-or-above (n shp) ;verifica se algum valores ultrapassa ou e igual ao tamanho da dim a que se refere
+	   (> (get-content (funcall (fold #'.+) (.>= n shp))) 0)) 
 
 (defgeneric drop (n1 tensor))
 
@@ -299,9 +303,11 @@
 						(new-tnsr (v-from-lst (remove-lists-dim tnsr1 n_els dim-rescaled))))
 					(drop-aux new-n1 new-tnsr))))
 
-(defmethod drop ((n1 tensor-lst) (tnsr1 tensor))
-	(drop-aux (hack-dims n1) tnsr1))
 
+(defmethod drop ((n1 tensor-lst) (tnsr1 tensor))
+	(if (verify-equal-or-above n1 (shape tnsr1))
+		Nil
+		(drop-aux (hack-dims n1) tnsr1)))
 
 
 ;reshape - Returns a tensor with the dimensions refered in the first argument,
