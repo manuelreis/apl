@@ -220,7 +220,7 @@
             (dolist (element1 (get-content v-tnsr1))
                 (dolist (element2 (get-content v-tnsr2))
                     (setq result (append result (list (funcall func element1 element2))))))
-            (reshape (v-from-lst (append shape2 shape1)) (v-from-lst result))))
+            (reshape (v-from-lst (append shape1 shape2)) (v-from-lst result))))
     #'outer-product-aux)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
