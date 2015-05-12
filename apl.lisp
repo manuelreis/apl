@@ -223,6 +223,56 @@
             (reshape (v-from-lst (append shape1 shape2)) (v-from-lst result))))
     #'outer-product-aux)
 
+
+
+(defun split (lst size)
+    (if (null lst)
+        NIL
+        (let ((small NIL))
+            (dotimes (i size)
+                (setq small (append small (list (nth i lst)))))
+            (append (list small) (split (nthcdr size lst) size)))))
+
+
+; inner-product - Accepts two functions and returns a function that, given two
+;                 tensors, returns a new tensor computed according to the rules of the algebraic
+;                 inner product but replacing the algebraic sum and product with
+;                 the first and second functions.
+
+(defgeneric inner-product (func1 func2))
+(defmethod inner-product ((func1 function) (func2 function))
+    (defun inner-product-aux (tns1 tns2)
+        (defun recursive-inner-func (num lst2)
+            (if (null lst2)
+                lst2
+                (list* (funcall func2 num (car lst2)) (recursive-inner-func num (cdr lst2)))))
+        (let* ((tnsr1 (if (length (get-content (shape tns1))) (reshape (catenate (v 1) (shape tns1)) tns1)))
+                (tnsr2 (if (length (get-content (shape tns2))) (reshape (catenate (shape tns2) (v 1)) tns2)))
+                (shape1 (shape tnsr1))
+                (shape2 (shape tnsr2))
+                (equal-dims (get-content (car (get-content shape2))))
+                (final-shape (catenate
+                    (v-from-lst (butlast (get-content shape1) 1))
+                    (v-from-lst (cdr (get-content shape2)))))
+                (vec1 (split (get-content (tensor-to-vector tnsr1)) (get-content (car (last (get-content shape1))))))
+                (vec2-temp (get-content (tensor-to-vector tnsr2)))
+                (vec2 (split vec2-temp (/ (length vec2-temp) (get-content (car (get-content shape2))))))
+                (result NIL)
+                (temp-result NIL))
+            (dolist (vec vec1)
+                (dotimes (i (length vec))
+                    (if (= 0 i)
+                        (setq temp-result (v-from-lst (recursive-inner-func (nth i vec) (nth i vec2))))
+                        (setq temp-result (funcall func1
+                                        temp-result
+                                        (v-from-lst (recursive-inner-func (nth i vec) (nth i vec2)))))))
+                (setq result (append result (get-content temp-result))))
+            (setq result (reshape final-shape (v-from-lst result)))
+            (if (equal-tensor (v 1 1) final-shape)
+                (car (get-content (car (get-content result))))
+                result)))
+        #'inner-product-aux)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
