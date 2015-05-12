@@ -808,10 +808,11 @@
 ;rank -	Define the function rank that, given a tensor, returns a scalar with the
 ;		number of dimensions of the tensor.
 
-(funcall (fold #'.+) (member? (v 1 2 3) (interval 59999)))
-
 
 (defgeneric rank (tnsr))
+
+(defmethod rank ((tnsr tensor-scalar))
+	(s 1))
 
 (defmethod rank ((tnsr tensor-lst))
 	(funcall (fold #'.+) (member? tnsr (interval 59999))))
