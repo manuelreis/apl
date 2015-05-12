@@ -804,6 +804,20 @@
 (defmethod tally ((tnsr tensor-lst))
     (funcall (fold #'.*) (shape tnsr)))
 
+
+;rank -	Define the function rank that, given a tensor, returns a scalar with the
+;		number of dimensions of the tensor.
+
+(funcall (fold #'.+) (member? (v 1 2 3) (interval 59999)))
+
+
+(defgeneric rank (tnsr))
+
+(defmethod rank ((tnsr tensor-lst))
+	(funcall (fold #'.+) (member? tnsr (interval 59999))))
+
+
+
 ;ravel - given a tensor, returns a vector containing all the elements of the tensor.
 (defgeneric ravel (tnsr))
 (defmethod ravel ((tnsr tensor-scalar))
@@ -811,6 +825,9 @@
 
 (defmethod ravel ((tnsr tensor-lst))
     (tensor-to-vector tnsr))
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;ISTO é para o caso de ter de ser os inteiros. mas ainda nao está bem feito
 ; ;ravel - given a tensor, returns a vector containing all the elements of the tensor.
