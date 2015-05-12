@@ -183,7 +183,7 @@
                 (dolist (element (get-content vctr))
                     (if (null res)
                         (setq res element)
-                        (setq res (funcall func element res))))
+                        (setq res (funcall func res element))))
             res))
     #'fold-aux)
 
@@ -414,6 +414,11 @@
 (defmethod catenate ((arg1 tensor-scalar) (arg2 tensor-scalar))
 	(v (get-content arg1) (get-content arg2)))
 
+(defmethod catenate ((arg1 tensor-lst) (arg2 tensor-scalar))
+    (catenate arg1 (reshape (v-from-lst (append (butlast (get-content (shape arg1))) (list (s 1)))) (v (get-content arg2)))))
+
+(defmethod catenate ((arg1 tensor-scalar) (arg2 tensor-lst))
+    (catenate (reshape (v-from-lst (append (butlast (get-content (shape arg2))) (list (s 1)))) (v (get-content arg1))) arg2))
 
 ;member? - Returns a tensor of booleans with the same shape and dimension of the
 ; 			first argument, containing 1 for each element in the corresponding location
