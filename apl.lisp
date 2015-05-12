@@ -12,7 +12,62 @@
 
 (defclass tensor-scalar (tensor) ())
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;               GENERICS                ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defgeneric get-content (object))
+(defgeneric s (arg))
+(defgeneric equal-tensor (tnsr1 tnsr2))
+(defgeneric v-from-lst (lst))
+(defgeneric PRINT-OBJECT-STRING (object))
+(defgeneric tensor-to-vector (tnsr))
+(defgeneric tensor-to-vector-aux (tnsr))
+(defgeneric hack-dims (dims))
+(defgeneric shape (tnsr))
+(defgeneric interval (num))
+(defgeneric fold (func))
+(defgeneric scan (func))
+(defgeneric outer-product (func))
+(defgeneric split (lst size))
+(defgeneric inner-product (func1 func2))
+(defgeneric drop (n1 tensor))
+(defgeneric reshape (dims fill-data))
+(defgeneric catenate (arg1 arg2))
+(defgeneric member? (tnsr elems))
+(defgeneric select (vec tnsr))
+
+(defgeneric .-Monadic (arg))
+(defgeneric ./Monadic (arg))
+(defgeneric .! (arg))
+(defgeneric .sin (arg))
+(defgeneric .cos (arg))
+(defgeneric .not (arg))
+(defgeneric .+ (arg1 arg2))
+(defgeneric .-Dyadic (arg1 arg2))
+(defgeneric .* (arg1 arg2))
+(defgeneric ./Dyadic (arg1 arg2))
+(defgeneric .// (arg1 arg2))
+(defgeneric .% (arg1 arg2))
+(defgeneric .< (arg1 arg2))
+(defgeneric .> (arg1 arg2))
+(defgeneric .<= (arg1 arg2))
+(defgeneric .>= (arg1 arg2))
+(defgeneric .= (arg1 arg2))
+(defgeneric .or (arg1 arg2))
+(defgeneric .and (arg1 arg2))
+
+(defgeneric tally (tnsr))
+(defgeneric rank (tnsr))
+(defgeneric ravel (tnsr))
+(defgeneric within (tnsr s1 s2))
+(defgeneric primes (nmbr))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 (defmethod get-content ((object tensor))
     (slot-value object 'slot-content))
 
@@ -26,7 +81,7 @@
     (make-instance 'tensor-lst :init-val (v-aux args)))
 
 
-(defgeneric equal-tensor (tnsr1 tnsr2))
+
 (defmethod equal-tensor ((tnsr1 t) (tnsr2 t))
     NIL)
 (defmethod equal-tensor ((tnsr1 tensor-lst) (tnsr2 tensor-lst))
@@ -70,7 +125,7 @@
 ;         (setf (slot-value result 'slot-content) (get-content scalar))
 ;         result))
 
-(defun v-from-lst (lst)
+(defmethod v-from-lst ((lst list))
     (make-instance 'tensor-lst :init-val lst))
 
 (defmethod PRINT-OBJECT ((object tensor-scalar) stream)
@@ -98,6 +153,7 @@
 (defmethod PRINT-OBJECT ((object tensor-lst) stream)
     (format stream (cdr (PRINT-OBJECT-STRING object))))
 
+
 (defmethod tensor-to-vector ((tnsr tensor-lst))
     (v-from-lst (tensor-to-vector-aux tnsr)))
 (defmethod tensor-to-vector-aux ((tnsr tensor-scalar))
@@ -114,12 +170,9 @@
                         (setq lst (append lst (tensor-to-vector-aux (v-from-lst (cdr (get-content tnsr)))))) ))))
         lst))
 
+
 (defmethod hack-dims ((dims tensor-lst))
     (v-from-lst (reverse (get-content dims))))
-    ; (let ((lst (reverse (get-content dims))))
-    ;     (v-from-lst (if (> (list-length lst) 1)
-    ;         (list* (second lst) (first lst) (cddr lst))
-    ;         lst))))
 
 ; ;queria isto mas vendo a class! é possivel?
 ; (defun tnsr-lst? (tnsr)
@@ -153,7 +206,6 @@
 
 ;shape - Creates a vector containing the length of 
 ;        each dimension of the argument tensor. 
-(defgeneric shape (tnsr))
 (defmethod shape ((tnsr tensor-scalar))
     NIL)
 (defmethod shape ((tnsr tensor-lst))
@@ -165,7 +217,6 @@
 ;interval - Creates a vector containing an enumeration
 ;           of all integers starting from 1 up to the
 ;           argument.
-(defgeneric interval (num))
 (defmethod interval ((num number))
     (defun recursive-interval (num lst)
         (if (<= num 1)
@@ -178,7 +229,6 @@
 ;fold - Accepts a function and returns another function
 ;       that, given a vector, computes the application
 ;       of the function to sucessive elements of the vector.
-(defgeneric fold (func))
 (defmethod fold ((func function))
     (defun fold-aux (vctr)
         (let ((res NIL))
@@ -193,7 +243,6 @@
 ;       subsets of the elements of the vector, starting
 ;       from a subset containing just the first element
 ;       up to a subset containing all elements. 
-(defgeneric scan (func))
 (defmethod scan ((func function))
     (defun scan-aux (vctr)
         (let ((last-value NIL)
@@ -211,7 +260,6 @@
 ;                a new tensor with the result of applying
 ;                the function to every combination of values
 ;                from the first and second tensors.
-(defgeneric outer-product (func))
 (defmethod outer-product ((func function))
     (defun outer-product-aux (tnsr1 tnsr2)
         (let ((shape1 (get-content (shape tnsr1)))
@@ -227,7 +275,7 @@
 
 
 
-(defun split (lst size)
+(defmethod split ((lst list) (size number))
     (if (null lst)
         NIL
         (let ((small NIL))
@@ -241,7 +289,6 @@
 ;                 inner product but replacing the algebraic sum and product with
 ;                 the first and second functions.
 
-(defgeneric inner-product (func1 func2))
 (defmethod inner-product ((func1 function) (func2 function))
     (defun inner-product-aux (tns1 tns2)
         (defun recursive-inner-func (num lst2)
@@ -329,7 +376,6 @@
 (defun verify-equal-or-above (n shp) ;verifica se algum valores ultrapassa ou e igual ao tamanho da dim a que se refere
 	   (> (get-content (funcall (fold #'.+) (.>= n shp))) 0)) 
 
-(defgeneric drop (n1 tensor))
 
 (defmethod drop ((n1 tensor-scalar) (tnsr tensor))
 	(let ((n (get-content n1)))
@@ -365,7 +411,6 @@
 	(let ((vec-c (get-content vec)))
   (v-from-lst (append (rest vec-c) (list (first vec-c))))))
 
-(defgeneric reshape (dims fill-data))
 
 (defvar fill-data-var)
 
@@ -396,7 +441,6 @@
 ;			the arguments along the their last dimension.
 
 
-(defgeneric catenate (arg1 arg2))
 
 (defun catenate-aux (arg1-vec arg2-vec n-cols-arg1 n-cols-arg2 vec-final)
 	(if (and (= 0 (list-length arg1-vec)) (= 0 (list-length arg2-vec)))
@@ -445,7 +489,6 @@
 ; 		(flatten (generate-all-pos-from-shape-aux shp-ct '()))))
 
 
-(defgeneric member? (tnsr elems))
  
 (defmethod member? ((tnsr tensor-scalar) (elems tensor-lst)) 
 	(let* ((elems-vec (get-content (tensor-to-vector elems)))
@@ -486,7 +529,6 @@
                 (setq res (append res (list i)))))
         res))
 
-(defgeneric select (vec tnsr))
 (defmethod select ((vec tensor-lst) (tnsr tensor-lst))
     (if (null (get-pos-of-columns vec))
         NIL
@@ -534,7 +576,6 @@
 
 ;.- Creates a tensor whose elements are the symmetric 
 ;of the corresponding elements of the argument tensor. 
-(defgeneric .-Monadic (arg))
 (defmethod .-Monadic ((arg tensor-scalar))
     (make-instance 'tensor-scalar :init-val (- 0 (get-content arg))))
 
@@ -543,7 +584,6 @@
 
 
 ;./ Same as the previous one, but using the inverse. 
-(defgeneric ./Monadic (arg))
 (defmethod ./Monadic ((arg tensor-scalar))
     (make-instance 'tensor-scalar :init-val (/ 1 (get-content arg))))
 
@@ -551,15 +591,17 @@
     (make-instance 'tensor-lst :init-val (monadic-tns #'./ (get-content arg))))
 
 ;.! Same as the previous one, but using the factorial.
-(defgeneric .! (arg))
 (defmethod .! ((arg tensor-scalar))
-    (make-instance 'tensor-scalar :init-val (! (get-content arg))))
+    (defun factorial (n)
+        (if (= n 0)
+            1
+            (* n (factorial (- n 1)))))
+    (make-instance 'tensor-scalar :init-val (factorial (get-content arg))))
 
 (defmethod .! ((arg tensor-lst))
     (make-instance 'tensor-lst :init-val (monadic-tns #'.! (get-content arg))))
 
 ;.sin Same as the previous one, but using the sin function. 
-(defgeneric .sin (arg))
 (defmethod .sin ((arg tensor-scalar))
     (make-instance 'tensor-scalar :init-val (sin (get-content arg))))
 
@@ -568,7 +610,6 @@
 
 
 ;.cos Same as the previous one, but using the cos function. 
-(defgeneric .cos (arg))
 (defmethod .cos ((arg tensor-scalar))
     (make-instance 'tensor-scalar :init-val (cos (get-content arg))))
 
@@ -580,7 +621,6 @@
 ;The result is a tensor containing, as elements, the integers 
 ;0 or 1, depending on the corresponding element in the 
 ;argument tensor being different that zero or equal to zero.
-(defgeneric .not (arg))
 (defmethod .not ((arg tensor-scalar))
     (if (= (get-content arg) 0)
         (make-instance 'tensor-scalar :init-val 1)
@@ -613,7 +653,6 @@
 
 ;.+ Creates a tensor with the sum of the corresponding 
 ;elements of the argument tensors.
-(defgeneric .+ (arg1 arg2))
 (defmethod .+ ((arg1 tensor-scalar) (arg2 tensor-scalar))
     (make-instance 'tensor-scalar :init-val (+ (get-content arg1) (get-content arg2))))
 
@@ -630,7 +669,6 @@
 
 
 ;.- Same as the previous one, but using subtraction.
-(defgeneric .-Dyadic (arg1 arg2))
 (defmethod .-Dyadic ((arg1 tensor-scalar) (arg2 tensor-scalar))
     (make-instance 'tensor-scalar :init-val (- (get-content arg1) (get-content arg2))))
 
@@ -647,7 +685,6 @@
 
 
 ;.* Same as the previous one, but using multiplication. 
-(defgeneric .* (arg1 arg2))
 (defmethod .* ((arg1 tensor-scalar) (arg2 tensor-scalar))
     (make-instance 'tensor-scalar :init-val (* (get-content arg1) (get-content arg2))))
 
@@ -663,7 +700,6 @@
         nil))
 
 ;./ Same as the previous one, but using division. 
-(defgeneric ./Dyadic (arg1 arg2))
 (defmethod ./Dyadic ((arg1 tensor-scalar) (arg2 tensor-scalar))
    (make-instance 'tensor-scalar :init-val (/ (get-content arg1) (get-content arg2))))
 
@@ -680,7 +716,6 @@
 
 
 ;.// Same as the previous one, but using integer division. 
-(defgeneric .// (arg1 arg2))
 (defmethod .// ((arg1 tensor-scalar) (arg2 tensor-scalar))
     (make-instance 'tensor-scalar :init-val (floor (get-content arg1) (get-content arg2))))
 
@@ -698,7 +733,6 @@
 
 ;.% Same as the previous one, but using the remainder of 
 ;the integer division. 
-(defgeneric .% (arg1 arg2))
 (defmethod .% ((arg1 tensor-scalar) (arg2 tensor-scalar))
     (make-instance 'tensor-scalar :init-val (nth-value 1 (floor (get-content arg1) (get-content arg2)))))
 
@@ -716,7 +750,6 @@
 
 ;.< Same as the previous one, but using the relation “less than.”
 ;The result tensor will have, as elements, the integers 0 or 1.
-(defgeneric .< (arg1 arg2))
 (defmethod .< ((arg1 tensor-scalar) (arg2 tensor-scalar))
     (if (< (get-content arg1) (get-content arg2))
         (make-instance 'tensor-scalar :init-val 1)
@@ -735,7 +768,6 @@
 
 
 ;.> Same as the previous one, but using the relation “greater than.”
-(defgeneric .> (arg1 arg2))
 (defmethod .> ((arg1 tensor-scalar) (arg2 tensor-scalar))
     (if (> (get-content arg1) (get-content arg2))
         (make-instance 'tensor-scalar :init-val 1)
@@ -755,7 +787,6 @@
 
 ;.<= Same as the previous one, but using the relation “less 
 ;than or equal to.” 
-(defgeneric .<= (arg1 arg2))
 (defmethod .<= ((arg1 tensor-scalar) (arg2 tensor-scalar))
     (if (<= (get-content arg1) (get-content arg2))
         (make-instance 'tensor-scalar :init-val 1)
@@ -775,7 +806,6 @@
 
 ;.>= Same as the previous one, but using the relation “greater 
 ;than or equal to.” 
-(defgeneric .>= (arg1 arg2))
 (defmethod .>= ((arg1 tensor-scalar) (arg2 tensor-scalar))
     (if (>= (get-content arg1) (get-content arg2))
         (make-instance 'tensor-scalar :init-val 1)
@@ -794,7 +824,6 @@
 
 
 ;.= Same as the previous one, but using the relation “equal to.” 
-(defgeneric .= (arg1 arg2))
 (defmethod .= ((arg1 tensor-scalar) (arg2 tensor-scalar))
     (if (= (get-content arg1) (get-content arg2))
         (make-instance 'tensor-scalar :init-val 1)
@@ -813,7 +842,6 @@
 
 
 ;.or Same as the previous one, but using the logical disjunction.
-(defgeneric .or (arg1 arg2))
 (defmethod .or ((arg1 tensor-scalar) (arg2 tensor-scalar))
     (let ((result nil))
     (cond ((and (= 0 (get-content arg1)) (= 0 (get-content arg2))) (setf result 0))
@@ -836,7 +864,6 @@
 
 
 ;.and Same as the previous one, but using the logical conjunction. 
-(defgeneric .and (arg1 arg2))
 (defmethod .and ((arg1 tensor-scalar) (arg2 tensor-scalar))
     (let ((result nil))
     (cond ((and (= 0 (get-content arg1)) (= 0 (get-content arg2))) (setf result 0))
@@ -865,7 +892,6 @@
 
 
 ;tally - given a tensor, returns a scalar with the number of elements of the tensor.
-(defgeneric tally (tnsr))
 (defmethod tally ((tnsr tensor-scalar))
 	(s 1))
 
@@ -875,10 +901,6 @@
 
 ;rank -	Define the function rank that, given a tensor, returns a scalar with the
 ;		number of dimensions of the tensor.
-
-
-(defgeneric rank (tnsr))
-
 (defmethod rank ((tnsr tensor-scalar))
 	(s 1))
 
@@ -888,7 +910,6 @@
 
 
 ;ravel - given a tensor, returns a vector containing all the elements of the tensor.
-(defgeneric ravel (tnsr))
 (defmethod ravel ((tnsr tensor-scalar))
     (make-instance 'tensor-lst :init-val (list tnsr)))
 
@@ -898,7 +919,6 @@
 ; within - given a vector of numbers v and two
 ;          numbers n1 and n2, returns a vector containing only the elements of v
 ;          that are in the range between n1 and n2.
-(defgeneric within (tnsr s1 s2))
 (defmethod within ((tnsr tensor-lst) (s1 tensor-scalar) (s2 tensor-scalar))
     (let ((x (drop (.- s1 (s 1)) (interval s2)))
           (y (reshape (shape tnsr) (v 0))))
@@ -906,7 +926,6 @@
 
 ; primes - given a scalar, returns a vector with all
 ;          prime numbers from 2 up to the scalar, inclusive.
-(defgeneric primes (nmbr))
 (defmethod primes ((nmbr tensor-scalar))
     (let ((R (drop (v 1) (interval nmbr))))
         (select (.not (member? R (funcall (outer-product #'.*) R R))) R)))
