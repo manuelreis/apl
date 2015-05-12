@@ -172,6 +172,8 @@
             (cons (s 1) lst)
             (recursive-interval (- num 1) (cons (s num) lst))))
     (v-from-lst (recursive-interval num '())))
+(defmethod interval ((num tensor-scalar))
+    (interval (get-content num)))
 
 ;fold - Accepts a function and returns another function
 ;       that, given a vector, computes the application
@@ -877,6 +879,11 @@
     (tensor-to-vector tnsr))
 
 
+(defgeneric within (tnsr s1 s2))
+(defmethod within ((tnsr tensor-lst) (s1 tensor-scalar) (s2 tensor-scalar))
+    (let ((x (drop (.- s1 (s 1)) (interval s2)))
+          (y (reshape (shape tnsr) (v 0))))
+        (select (.not (.= (.* (member? tnsr x) tnsr) y)) tnsr)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;ISTO é para o caso de ter de ser os inteiros. mas ainda nao está bem feito
