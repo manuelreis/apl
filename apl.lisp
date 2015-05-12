@@ -121,31 +121,31 @@
     ;         (list* (second lst) (first lst) (cddr lst))
     ;         lst))))
 
-;queria isto mas vendo a class! é possivel?
-(defun tnsr-lst? (tnsr)
-    (if (eq (type-of tnsr) 'tensor-lst)
-        t
-        nil))
+; ;queria isto mas vendo a class! é possivel?
+; (defun tnsr-lst? (tnsr)
+;     (if (eq (type-of tnsr) 'tensor-lst)
+;         t
+;         nil))
 
-(defun tnsr-scalar? (tnsr)
-    (if (eq (type-of tnsr) 'tensor-scalar)
-        t
-        nil))
+; (defun tnsr-scalar? (tnsr)
+;     (if (eq (type-of tnsr) 'tensor-scalar)
+;         t
+;         nil))
 
-(defun flatten (mylist)
-  (cond
-   ((null mylist) nil)
-   ((atom mylist) (list mylist))
-   (t
-    (append (flatten (car mylist)) (flatten (cdr mylist))))))
+; (defun flatten (mylist)
+;   (cond
+;    ((null mylist) nil)
+;    ((atom mylist) (list mylist))
+;    (t
+;     (append (flatten (car mylist)) (flatten (cdr mylist))))))
 
-(defun remove-nth (n list)
-  (declare
-    (type (integer 0) n)
-    (type list list))
-  (if (or (zerop n) (null list))
-    (cdr list)
-    (cons (car list) (remove-nth (1- n) (cdr list)))))
+; (defun remove-nth (n list)
+;   (declare
+;     (type (integer 0) n)
+;     (type list list))
+;   (if (or (zerop n) (null list))
+;     (cdr list)
+;     (cons (car list) (remove-nth (1- n) (cdr list)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;; CARLOS ;;;;;;;;;;;;;;;;;;;;;;;;;
