@@ -895,30 +895,18 @@
 (defmethod ravel ((tnsr tensor-lst))
     (reshape (tally tnsr) tnsr))
 
-
+; within - given a vector of numbers v and two
+;          numbers n1 and n2, returns a vector containing only the elements of v
+;          that are in the range between n1 and n2.
 (defgeneric within (tnsr s1 s2))
 (defmethod within ((tnsr tensor-lst) (s1 tensor-scalar) (s2 tensor-scalar))
     (let ((x (drop (.- s1 (s 1)) (interval s2)))
           (y (reshape (shape tnsr) (v 0))))
         (select (.not (.= (.* (member? tnsr x) tnsr) y)) tnsr)))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;ISTO é para o caso de ter de ser os inteiros. mas ainda nao está bem feito
-; ;ravel - given a tensor, returns a vector containing all the elements of the tensor.
-; (defgeneric ravel (tnsr))
-; (defmethod ravel ((tnsr tensor-scalar))
-;     (make-instance 'tensor-lst :init-val (get-content tnsr)))
-
-; (defmethod ravel ((tnsr tensor-lst))
-;     (defun ravel-aux (lst)
-;         (let ((final-lst (list)))
-;             (loop for x in lst
-;                 do (setf final-lst (append final-lst (list (get-content x)))))
-;         final-lst))
-;     (make-instance 'tensor-lst :init-val (ravel-aux (get-content (tensor-to-vector tnsr)))))
-
-
-
-
-
-
+; primes - given a scalar, returns a vector with all
+;          prime numbers from 2 up to the scalar, inclusive.
+(defgeneric primes (nmbr))
+(defmethod primes ((nmbr tensor-scalar))
+    (let ((R (drop (v 1) (interval nmbr))))
+        (select (.not (member? R (funcall (outer-product #'.*) R R))) R)))
