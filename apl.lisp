@@ -866,7 +866,7 @@
 	(s 1))
 
 (defmethod rank ((tnsr tensor-lst))
-	(funcall (fold #'.+) (member? tnsr (interval 59999))))
+	(funcall (fold #'.+) (.not (.= (reshape (shape (shape tnsr)) (v 0)) (shape tnsr)))))
 
 
 
