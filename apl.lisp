@@ -39,36 +39,36 @@
     (eq (get-content tnsr1) (get-content tnsr2)))
 
 
-(defgeneric hard-tensor-copy (tnsr))
-(defmethod hard-tensor-copy ((tnsr tensor-scalar))
-    (s (get-content tnsr)))
+; (defgeneric hard-tensor-copy (tnsr))
+; (defmethod hard-tensor-copy ((tnsr tensor-scalar))
+;     (s (get-content tnsr)))
 
-(defmethod hard-tensor-copy ((tnsr tensor-lst))
-    (defun hard-tensor-copy-recursive (lst)
-        (if (null lst)
-            lst
-            (cons (hard-tensor-copy (car lst)) (hard-tensor-copy-recursive (cdr lst)))))
-    (let ((v-tnsr (tensor-to-vector tnsr)))
-        (reshape
-            (shape tnsr)
-            (v-from-lst (hard-tensor-copy-recursive (get-content v-tnsr))))))
+; (defmethod hard-tensor-copy ((tnsr tensor-lst))
+;     (defun hard-tensor-copy-recursive (lst)
+;         (if (null lst)
+;             lst
+;             (cons (hard-tensor-copy (car lst)) (hard-tensor-copy-recursive (cdr lst)))))
+;     (let ((v-tnsr (tensor-to-vector tnsr)))
+;         (reshape
+;             (shape tnsr)
+;             (v-from-lst (hard-tensor-copy-recursive (get-content v-tnsr))))))
 
-(defgeneric get-scalar-from-pos (tnsr temp-coords))
-(defmethod get-scalar-from-pos ((tnsr tensor-lst) (temp-coords tensor-lst))
-    (let ((result tnsr)
-            (coords (v-from-lst (nreverse (get-content (hack-dims temp-coords))))))
-        (dolist (dim-pos (get-content coords))
-            (setq result (nth (1- (get-content dim-pos)) (get-content result))))
-        result))
+; (defgeneric get-scalar-from-pos (tnsr temp-coords))
+; (defmethod get-scalar-from-pos ((tnsr tensor-lst) (temp-coords tensor-lst))
+;     (let ((result tnsr)
+;             (coords (v-from-lst (nreverse (get-content (hack-dims temp-coords))))))
+;         (dolist (dim-pos (get-content coords))
+;             (setq result (nth (1- (get-content dim-pos)) (get-content result))))
+;         result))
 
-(defgeneric set-scalar-from-pos (tnsr temp-coords scalar))
-(defmethod set-scalar-from-pos ((tnsr tensor-lst) (temp-coords tensor-lst) (scalar tensor-scalar))
-    (let ((result tnsr)
-            (coords (v-from-lst (nreverse (get-content (hack-dims temp-coords))))))
-        (dolist (dim-pos (get-content coords))
-            (setq result (nth (1- (get-content dim-pos)) (get-content result))))
-        (setf (slot-value result 'slot-content) (get-content scalar))
-        result))
+; (defgeneric set-scalar-from-pos (tnsr temp-coords scalar))
+; (defmethod set-scalar-from-pos ((tnsr tensor-lst) (temp-coords tensor-lst) (scalar tensor-scalar))
+;     (let ((result tnsr)
+;             (coords (v-from-lst (nreverse (get-content (hack-dims temp-coords))))))
+;         (dolist (dim-pos (get-content coords))
+;             (setq result (nth (1- (get-content dim-pos)) (get-content result))))
+;         (setf (slot-value result 'slot-content) (get-content scalar))
+;         result))
 
 (defun v-from-lst (lst)
     (make-instance 'tensor-lst :init-val lst))
@@ -433,16 +433,16 @@
 
 
 
-(defun generate-all-pos-from-shape-aux (shp pos)
-	(if (= 0 (list-length shp))
-		(v-from-lst pos) 
-		(let ((limit (get-content (car shp))))
-				 	(loop for pos_i in (get-content (interval limit)) 
-						collect (generate-all-pos-from-shape-aux (rest shp) (append pos (list pos_i)))))))
+; (defun generate-all-pos-from-shape-aux (shp pos)
+; 	(if (= 0 (list-length shp))
+; 		(v-from-lst pos) 
+; 		(let ((limit (get-content (car shp))))
+; 				 	(loop for pos_i in (get-content (interval limit)) 
+; 						collect (generate-all-pos-from-shape-aux (rest shp) (append pos (list pos_i)))))))
 
-(defun generate-all-pos-from-shape (shp)
-	(let ((shp-ct (get-content shp)))
-		(flatten (generate-all-pos-from-shape-aux shp-ct '()))))
+; (defun generate-all-pos-from-shape (shp)
+; 	(let ((shp-ct (get-content shp)))
+; 		(flatten (generate-all-pos-from-shape-aux shp-ct '()))))
 
 
 (defgeneric member? (tnsr elems))
@@ -451,20 +451,28 @@
 	(let* ((elems-vec (get-content (tensor-to-vector elems)))
 		  (rest-elems-vec (rest elems-vec)))
 			(if (= (get-content tnsr) (get-content (car elems-vec)))
-				1
+				(s 1)
 				(if (= (list-length rest-elems-vec) 0)
-					0
+					(s 0)
 					(member? tnsr (v-from-lst rest-elems-vec))))))
 
 
+; (defmethod member? ((tnsr tensor-lst) (elems tensor-lst))
+; 	(let ((new-tnsr (hard-tensor-copy tnsr))
+; 		 (shp (shape tnsr)))
+; 			(dolist (pos (generate-all-pos-from-shape shp))
+; 		 		(let* ((result (get-scalar-from-pos tnsr pos))
+; 		 			  (is-member (member? result elems)))
+; 		 			(set-scalar-from-pos new-tnsr pos is-member)))
+; 				new-tnsr))
+
 (defmethod member? ((tnsr tensor-lst) (elems tensor-lst))
-	(let ((new-tnsr (hard-tensor-copy tnsr))
-		 (shp (shape tnsr)))
-			(dolist (pos (generate-all-pos-from-shape shp))
-		 		(let* ((result (get-scalar-from-pos tnsr pos))
-		 			  (is-member (s (member? result elems))))
-		 			(set-scalar-from-pos new-tnsr pos is-member)))
-				new-tnsr))
+    (let ((vec1 (tensor-to-vector tnsr))
+            (vec2 (tensor-to-vector elems))
+            (result NIL))
+        (dolist (elem (get-content vec1))
+            (setq result (append result (list (member? elem vec2)))))
+        (reshape (shape tnsr) (v-from-lst result))))
 
 ;select - From a tensor of booleans and another tensor, returns a tensor containing
 ;  		  only the elements of the last dimension of the second argument whose
