@@ -250,7 +250,6 @@
                 (tnsr2 (if (length (get-content (shape tns2))) (reshape (catenate (shape tns2) (v 1)) tns2)))
                 (shape1 (shape tnsr1))
                 (shape2 (shape tnsr2))
-                (equal-dims (get-content (car (get-content shape2))))
                 (final-shape (catenate
                     (v-from-lst (butlast (get-content shape1) 1))
                     (v-from-lst (cdr (get-content shape2)))))
