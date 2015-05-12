@@ -383,8 +383,12 @@
 			  					collect (reshape-aux (v-from-lst rest-dim)))))))
 
 (defmethod reshape ((dims tensor-lst) (fill-data tensor-lst))
-    (progn (setf  fill-data-var fill-data)
+    (progn (setf  fill-data-var (tensor-to-vector fill-data))
         (reshape-aux (hack-dims dims))))
+
+(defmethod reshape ((dims tensor-scalar) (fill-data tensor-lst))
+    (progn (setf  fill-data-var (tensor-to-vector fill-data))
+        (reshape-aux (hack-dims (v (get-content dims))))))
 
 
 ;catenate - If the two arguments are scalars, returns a vector containing those
@@ -881,7 +885,7 @@
     (make-instance 'tensor-lst :init-val (list tnsr)))
 
 (defmethod ravel ((tnsr tensor-lst))
-    (tensor-to-vector tnsr))
+    (reshape (tally tnsr) tnsr))
 
 
 (defgeneric within (tnsr s1 s2))
