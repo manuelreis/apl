@@ -70,6 +70,8 @@
 
 (defmethod get-content ((object tensor))
     (slot-value object 'slot-content))
+(defmethod get-content ((object null))
+    NIL)
 
 (defmethod s ((arg number)) (make-instance 'tensor-scalar :init-val arg))
 
@@ -96,7 +98,7 @@
             (equal-tensor (car (get-content tnsr1)) (car (get-content tnsr2)))
             (equal-tensor (v-from-lst (cdr (get-content tnsr1))) (v-from-lst (cdr (get-content tnsr2)))))))
 (defmethod equal-tensor ((tnsr1 tensor-scalar) (tnsr2 tensor-scalar))
-    (eq (get-content tnsr1) (get-content tnsr2)))
+    (equal (get-content tnsr1) (get-content tnsr2)))
 
 (defmethod v-from-lst ((lst list))
     (make-instance 'tensor-lst :init-val lst))
@@ -236,14 +238,16 @@
 ;                 the first and second functions.
 
 (defmethod inner-product ((func1 function) (func2 function))
-    (labels ((inner-product-aux (tns1 tns2)
+    (labels ((inner-product-aux (t1 t2)
         (labels ((recursive-inner-func (num lst2)
             (if (null lst2)
                 lst2
                 (list* (funcall func2 num (car lst2)) (recursive-inner-func num (cdr lst2))))))
 
-            (let* ((tnsr1 (if (length (get-content (shape tns1))) (reshape (catenate (v 1) (shape tns1)) tns1)))
-                    (tnsr2 (if (length (get-content (shape tns2))) (reshape (catenate (shape tns2) (v 1)) tns2)))
+            (let* ((tns1 (if (null (shape t1)) (tensor-to-vector t1) t1))
+                    (tns2 (if (null (shape t2)) (tensor-to-vector t2) t2))
+                    (tnsr1 (if (= (length (get-content (shape tns1))) 1) (reshape (catenate (v 1) (shape tns1)) tns1) tns1))
+                    (tnsr2 (if (= (length (get-content (shape tns2))) 1) (reshape (catenate (shape tns2) (v 1)) tns2) tns2))
                     (shape1 (shape tnsr1))
                     (shape2 (shape tnsr2))
                     (final-shape (catenate
@@ -365,11 +369,11 @@
 			  (v-from-lst (loop for i from 1 to dim-qty 
 			  					collect (reshape-aux (v-from-lst rest-dim)))))))
 
-(defmethod reshape ((dims tensor-lst) (fill-data tensor-lst))
+(defmethod reshape ((dims tensor-lst) (fill-data tensor))
     (progn (setf  fill-data-var (tensor-to-vector fill-data))
         (reshape-aux (hack-dims dims))))
 
-(defmethod reshape ((dims tensor-scalar) (fill-data tensor-lst))
+(defmethod reshape ((dims tensor-scalar) (fill-data tensor))
     (progn (setf  fill-data-var (tensor-to-vector fill-data))
         (reshape-aux (hack-dims (v (get-content dims))))))
 
@@ -407,7 +411,10 @@
 
 (defmethod catenate ((arg1 tensor-scalar) (arg2 tensor-lst))
     (catenate (reshape (v-from-lst (append (butlast (get-content (shape arg2))) (list (s 1)))) (v (get-content arg1))) arg2))
-
+(defmethod catenate ((arg1 tensor) (arg2 null))
+    arg1)
+(defmethod catenate ((arg1 null) (arg2 tensor))
+    arg2)
 (defmethod catenate :before ((arg1 tensor) (arg2 tensor)) 
 	(let*  ((shp1 (shape arg1))
 			(shp2 (shape arg2)))
