@@ -74,11 +74,11 @@
 (defmethod s ((arg number)) (make-instance 'tensor-scalar :init-val arg))
 
 (defun v (&rest args)
-    (defun v-aux (lst)
-        (if (null lst)
-            '()
-            (cons (s (car lst)) (v-aux (cdr lst)))))
-    (make-instance 'tensor-lst :init-val (v-aux args)))
+    (labels ((v-aux (lst)
+                (if (null lst)
+                    '()
+                    (cons (s (car lst)) (v-aux (cdr lst))))))
+        (make-instance 'tensor-lst :init-val (v-aux args))))
 
 
 
@@ -129,6 +129,8 @@
 
 (defmethod tensor-to-vector ((tnsr tensor-lst))
     (v-from-lst (tensor-to-vector-aux tnsr)))
+(defmethod tensor-to-vector ((tnsr tensor-scalar))
+    (v (get-content tnsr)))
 (defmethod tensor-to-vector-aux ((tnsr tensor-scalar))
     (list tnsr))
 (defmethod tensor-to-vector-aux ((tnsr tensor-lst))
@@ -162,11 +164,11 @@
 ;           of all integers starting from 1 up to the
 ;           argument.
 (defmethod interval ((num number))
-    (defun recursive-interval (num lst)
-        (if (<= num 1)
-            (cons (s 1) lst)
-            (recursive-interval (- num 1) (cons (s num) lst))))
-    (v-from-lst (recursive-interval num '())))
+    (labels ((recursive-interval (num lst)
+                (if (<= num 1)
+                    (cons (s 1) lst)
+                    (recursive-interval (- num 1) (cons (s num) lst)))))
+        (v-from-lst (recursive-interval num '()))))
 (defmethod interval ((num tensor-scalar))
     (interval (get-content num)))
 
@@ -174,30 +176,30 @@
 ;       that, given a vector, computes the application
 ;       of the function to sucessive elements of the vector.
 (defmethod fold ((func function))
-    (defun fold-aux (vctr)
-        (let ((res NIL))
-                (dolist (element (get-content vctr))
-                    (if (null res)
-                        (setq res element)
-                        (setq res (funcall func res element))))
-            res))
-    #'fold-aux)
+    (labels ((fold-aux (vctr)
+                (let ((res NIL))
+                        (dolist (element (get-content (tensor-to-vector vctr)))
+                            (if (null res)
+                                (setq res element)
+                                (setq res (funcall func res element))))
+                    res)))
+        #'fold-aux))
 
 ;scan - Similar to fold but using increasingly large
 ;       subsets of the elements of the vector, starting
 ;       from a subset containing just the first element
 ;       up to a subset containing all elements. 
 (defmethod scan ((func function))
-    (defun scan-aux (vctr)
+    (labels ((scan-aux (vctr)
         (let ((last-value NIL)
-              (res '()))
-                (dolist (element (get-content vctr))
+                (res '()))
+                (dolist (element (get-content (tensor-to-vector vctr)))
                     (if (null res)
                         (setq last-value element)
-                        (setq last-value (funcall func element last-value)))
+                        (setq last-value (funcall func last-value element)))
                     (setq res (append res (list last-value))))
-            (v-from-lst res)))
-    #'scan-aux)
+            (v-from-lst res))))
+        #'scan-aux))
 
 ;outer-product - Accepts a function and returns another
 ;                functions that, given two tensors, returns
@@ -205,17 +207,17 @@
 ;                the function to every combination of values
 ;                from the first and second tensors.
 (defmethod outer-product ((func function))
-    (defun outer-product-aux (tnsr1 tnsr2)
-        (let ((shape1 (get-content (shape tnsr1)))
-                (shape2 (get-content (shape tnsr2)))
-                (v-tnsr1 (tensor-to-vector tnsr1))
-                (v-tnsr2 (tensor-to-vector tnsr2))
-                (result NIL))
-            (dolist (element1 (get-content v-tnsr1))
-                (dolist (element2 (get-content v-tnsr2))
-                    (setq result (append result (list (funcall func element1 element2))))))
-            (reshape (v-from-lst (append shape1 shape2)) (v-from-lst result))))
-    #'outer-product-aux)
+    (labels ((outer-product-aux (tnsr1 tnsr2)
+                (let ((shape1 (get-content (shape tnsr1)))
+                        (shape2 (get-content (shape tnsr2)))
+                        (v-tnsr1 (tensor-to-vector tnsr1))
+                        (v-tnsr2 (tensor-to-vector tnsr2))
+                        (result NIL))
+                    (dolist (element1 (get-content v-tnsr1))
+                        (dolist (element2 (get-content v-tnsr2))
+                            (setq result (append result (list (funcall func element1 element2))))))
+                    (reshape (v-from-lst (append shape1 shape2)) (v-from-lst result)))))
+        #'outer-product-aux))
 
 
 
@@ -234,36 +236,37 @@
 ;                 the first and second functions.
 
 (defmethod inner-product ((func1 function) (func2 function))
-    (defun inner-product-aux (tns1 tns2)
-        (defun recursive-inner-func (num lst2)
+    (labels ((inner-product-aux (tns1 tns2)
+        (labels ((recursive-inner-func (num lst2)
             (if (null lst2)
                 lst2
-                (list* (funcall func2 num (car lst2)) (recursive-inner-func num (cdr lst2)))))
-        (let* ((tnsr1 (if (length (get-content (shape tns1))) (reshape (catenate (v 1) (shape tns1)) tns1)))
-                (tnsr2 (if (length (get-content (shape tns2))) (reshape (catenate (shape tns2) (v 1)) tns2)))
-                (shape1 (shape tnsr1))
-                (shape2 (shape tnsr2))
-                (final-shape (catenate
-                    (v-from-lst (butlast (get-content shape1) 1))
-                    (v-from-lst (cdr (get-content shape2)))))
-                (vec1 (split (get-content (tensor-to-vector tnsr1)) (get-content (car (last (get-content shape1))))))
-                (vec2-temp (get-content (tensor-to-vector tnsr2)))
-                (vec2 (split vec2-temp (/ (length vec2-temp) (get-content (car (get-content shape2))))))
-                (result NIL)
-                (temp-result NIL))
-            (dolist (vec vec1)
-                (dotimes (i (length vec))
-                    (if (= 0 i)
-                        (setq temp-result (v-from-lst (recursive-inner-func (nth i vec) (nth i vec2))))
-                        (setq temp-result (funcall func1
-                                        temp-result
-                                        (v-from-lst (recursive-inner-func (nth i vec) (nth i vec2)))))))
-                (setq result (append result (get-content temp-result))))
-            (setq result (reshape final-shape (v-from-lst result)))
-            (if (equal-tensor (v 1 1) final-shape)
-                (car (get-content (car (get-content result))))
-                result)))
-        #'inner-product-aux)
+                (list* (funcall func2 num (car lst2)) (recursive-inner-func num (cdr lst2))))))
+
+            (let* ((tnsr1 (if (length (get-content (shape tns1))) (reshape (catenate (v 1) (shape tns1)) tns1)))
+                    (tnsr2 (if (length (get-content (shape tns2))) (reshape (catenate (shape tns2) (v 1)) tns2)))
+                    (shape1 (shape tnsr1))
+                    (shape2 (shape tnsr2))
+                    (final-shape (catenate
+                        (v-from-lst (butlast (get-content shape1) 1))
+                        (v-from-lst (cdr (get-content shape2)))))
+                    (vec1 (split (get-content (tensor-to-vector tnsr1)) (get-content (car (last (get-content shape1))))))
+                    (vec2-temp (get-content (tensor-to-vector tnsr2)))
+                    (vec2 (split vec2-temp (/ (length vec2-temp) (get-content (car (get-content shape2))))))
+                    (result NIL)
+                    (temp-result NIL))
+                (dolist (vec vec1)
+                    (dotimes (i (length vec))
+                        (if (= 0 i)
+                            (setq temp-result (v-from-lst (recursive-inner-func (nth i vec) (nth i vec2))))
+                            (setq temp-result (funcall func1
+                                            temp-result
+                                            (v-from-lst (recursive-inner-func (nth i vec) (nth i vec2)))))))
+                    (setq result (append result (get-content temp-result))))
+                (setq result (reshape final-shape (v-from-lst result)))
+                (if (equal-tensor (v 1 1) final-shape)
+                    (car (get-content (car (get-content result))))
+                    result)))))
+            #'inner-product-aux))
 
 
 (defun get-dim-and-n-aux (n_lst n_elm dim stop n_lst_rest)
@@ -502,13 +505,13 @@
 
 ;.! Same as the previous one, but using the factorial.
 (defmethod .! ((arg tensor-scalar))
-    (defun factorial (n)
-        (if (= n 0)
-            1
-            (* n (factorial (- n 1)))))
-    (if (< (get-content arg) 0)
-        (error "THE ARGUMENT CANNOT BE NEGATIVE")
-        (make-instance 'tensor-scalar :init-val (factorial (get-content arg)))))
+    (labels ((factorial (n)
+            (if (= n 0)
+                1
+                (* n (factorial (- n 1))))))
+        (if (< (get-content arg) 0)
+            (error "THE ARGUMENT CANNOT BE NEGATIVE")
+            (make-instance 'tensor-scalar :init-val (factorial (get-content arg))))))
 
 (defmethod .! ((arg tensor-lst))
     (make-instance 'tensor-lst :init-val (monadic-tns #'.! (get-content arg))))
