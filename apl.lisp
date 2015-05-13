@@ -98,46 +98,14 @@
 (defmethod equal-tensor ((tnsr1 tensor-scalar) (tnsr2 tensor-scalar))
     (eq (get-content tnsr1) (get-content tnsr2)))
 
-
-; (defgeneric hard-tensor-copy (tnsr))
-; (defmethod hard-tensor-copy ((tnsr tensor-scalar))
-;     (s (get-content tnsr)))
-
-; (defmethod hard-tensor-copy ((tnsr tensor-lst))
-;     (defun hard-tensor-copy-recursive (lst)
-;         (if (null lst)
-;             lst
-;             (cons (hard-tensor-copy (car lst)) (hard-tensor-copy-recursive (cdr lst)))))
-;     (let ((v-tnsr (tensor-to-vector tnsr)))
-;         (reshape
-;             (shape tnsr)
-;             (v-from-lst (hard-tensor-copy-recursive (get-content v-tnsr))))))
-
-; (defgeneric get-scalar-from-pos (tnsr temp-coords))
-; (defmethod get-scalar-from-pos ((tnsr tensor-lst) (temp-coords tensor-lst))
-;     (let ((result tnsr)
-;             (coords (v-from-lst (nreverse (get-content (hack-dims temp-coords))))))
-;         (dolist (dim-pos (get-content coords))
-;             (setq result (nth (1- (get-content dim-pos)) (get-content result))))
-;         result))
-
-; (defgeneric set-scalar-from-pos (tnsr temp-coords scalar))
-; (defmethod set-scalar-from-pos ((tnsr tensor-lst) (temp-coords tensor-lst) (scalar tensor-scalar))
-;     (let ((result tnsr)
-;             (coords (v-from-lst (nreverse (get-content (hack-dims temp-coords))))))
-;         (dolist (dim-pos (get-content coords))
-;             (setq result (nth (1- (get-content dim-pos)) (get-content result))))
-;         (setf (slot-value result 'slot-content) (get-content scalar))
-;         result))
-
 (defmethod v-from-lst ((lst list))
     (make-instance 'tensor-lst :init-val lst))
 
 (defmethod PRINT-OBJECT ((object tensor-scalar) stream)
-    (format stream "{~d}" (get-content object)))
+    (format stream "~d" (get-content object)))
 
 (defmethod PRINT-OBJECT-STRING ((object tensor-scalar))
-    (cons 0 (concatenate 'string "{" (write-to-string (get-content object)) "} ")))
+    (cons 0 (concatenate 'string (write-to-string (get-content object)) " ")))
 
 (defmethod PRINT-OBJECT-STRING ((arg tensor-lst))
     (let ((temp NIL)
@@ -179,35 +147,6 @@
 (defmethod hack-dims ((dims tensor-lst))
     (v-from-lst (reverse (get-content dims))))
 
-; ;queria isto mas vendo a class! é possivel?
-; (defun tnsr-lst? (tnsr)
-;     (if (eq (type-of tnsr) 'tensor-lst)
-;         t
-;         nil))
-
-; (defun tnsr-scalar? (tnsr)
-;     (if (eq (type-of tnsr) 'tensor-scalar)
-;         t
-;         nil))
-
-; (defun flatten (mylist)
-;   (cond
-;    ((null mylist) nil)
-;    ((atom mylist) (list mylist))
-;    (t
-;     (append (flatten (car mylist)) (flatten (cdr mylist))))))
-
-; (defun remove-nth (n list)
-;   (declare
-;     (type (integer 0) n)
-;     (type list list))
-;   (if (or (zerop n) (null list))
-;     (cdr list)
-;     (cons (car list) (remove-nth (1- n) (cdr list)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;; CARLOS ;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;shape - Creates a vector containing the length of 
 ;        each dimension of the argument tensor. 
@@ -325,15 +264,6 @@
                 (car (get-content (car (get-content result))))
                 result)))
         #'inner-product-aux)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;; REIS ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 (defun get-dim-and-n-aux (n_lst n_elm dim stop n_lst_rest)
@@ -488,18 +418,6 @@
 
 
 
-; (defun generate-all-pos-from-shape-aux (shp pos)
-; 	(if (= 0 (list-length shp))
-; 		(v-from-lst pos) 
-; 		(let ((limit (get-content (car shp))))
-; 				 	(loop for pos_i in (get-content (interval limit)) 
-; 						collect (generate-all-pos-from-shape-aux (rest shp) (append pos (list pos_i)))))))
-
-; (defun generate-all-pos-from-shape (shp)
-; 	(let ((shp-ct (get-content shp)))
-; 		(flatten (generate-all-pos-from-shape-aux shp-ct '()))))
-
-
  
 (defmethod member? ((tnsr tensor-scalar) (elems tensor-lst)) 
 	(let* ((elems-vec (get-content (tensor-to-vector elems)))
@@ -510,15 +428,6 @@
 					(s 0)
 					(member? tnsr (v-from-lst rest-elems-vec))))))
 
-
-; (defmethod member? ((tnsr tensor-lst) (elems tensor-lst))
-; 	(let ((new-tnsr (hard-tensor-copy tnsr))
-; 		 (shp (shape tnsr)))
-; 			(dolist (pos (generate-all-pos-from-shape shp))
-; 		 		(let* ((result (get-scalar-from-pos tnsr pos))
-; 		 			  (is-member (member? result elems)))
-; 		 			(set-scalar-from-pos new-tnsr pos is-member)))
-; 				new-tnsr))
 
 (defmethod member? ((tnsr tensor-lst) (elems tensor-lst))
     (let ((vec1 (tensor-to-vector tnsr))
@@ -557,16 +466,6 @@
                         NIL
                         (get-content (select vec (v-from-lst (cdr (get-content tnsr)))))))))))
 
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;; ANA RITA DA COSTA PEREIRA ;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;; MONADIC FUNCTIONS ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -655,14 +554,6 @@
         (list)
         (cons (funcall func int (car lst)) (dyadic-tns-scalar func int (cdr lst)))))
 
-(defun dyadic-equal-dim (lst1 lst2)
-    (if (null lst1)
-        t
-        (progn
-            (if (= (get-content (car lst1)) (get-content (car lst2)))
-                (dyadic-equal-dim (cdr lst1) (cdr lst2))
-                NIL)))) 
-
 
 ;.+ Creates a tensor with the sum of the corresponding 
 ;elements of the argument tensors.
@@ -676,7 +567,7 @@
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.+ arg2 (get-content arg1))))
 
 (defmethod .+ ((arg1 tensor-lst) (arg2 tensor-lst))
-    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+    (if (not (null (equal-tensor (shape arg1) (shape arg2))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.+ (get-content arg1) (get-content arg2)))
         (error "TENSORS CANNOT HAVE DIFFERENT DIMENSIONS")))
 
@@ -692,7 +583,7 @@
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.-Dyadic arg2 (get-content arg1))))
 
 (defmethod .-Dyadic ((arg1 tensor-lst) (arg2 tensor-lst))
-    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+    (if (not (null (equal-tensor (shape arg1) (shape arg2))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.-Dyadic (get-content arg1) (get-content arg2)))
         (error "TENSORS CANNOT HAVE DIFFERENT DIMENSIONS")))
 
@@ -708,7 +599,7 @@
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.* arg2 (get-content arg1))))
 
 (defmethod .* ((arg1 tensor-lst) (arg2 tensor-lst))
-    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+    (if (not (null (equal-tensor (shape arg1) (shape arg2))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.* (get-content arg1) (get-content arg2)))
         (error "TENSORS CANNOT HAVE DIFFERENT DIMENSIONS")))
 
@@ -725,7 +616,7 @@
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'./Dyadic arg2 (get-content arg1))))
 
 (defmethod ./Dyadic ((arg1 tensor-lst) (arg2 tensor-lst))
-    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+    (if (not (null (equal-tensor (shape arg1) (shape arg2))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'./Dyadic (get-content arg1) (get-content arg2)))
         (error "TENSORS CANNOT HAVE DIFFERENT DIMENSIONS")))
 
@@ -741,7 +632,7 @@
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.// arg2 (get-content arg1))))
 
 (defmethod .// ((arg1 tensor-lst) (arg2 tensor-lst))
-    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+    (if (not (null (equal-tensor (shape arg1) (shape arg2))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.// (get-content arg1) (get-content arg2)))
         (error "TENSORS CANNOT HAVE DIFFERENT DIMENSIONS")))
 
@@ -758,7 +649,7 @@
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.% arg2 (get-content arg1))))
 
 (defmethod .% ((arg1 tensor-lst) (arg2 tensor-lst))
-    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+    (if (not (null (equal-tensor (shape arg1) (shape arg2))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.% (get-content arg1) (get-content arg2)))
         (error "TENSORS CANNOT HAVE DIFFERENT DIMENSIONS")))
 
@@ -777,7 +668,7 @@
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.< arg2 (get-content arg1))))
 
 (defmethod .< ((arg1 tensor-lst) (arg2 tensor-lst))
-    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+    (if (not (null (equal-tensor (shape arg1) (shape arg2))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.< (get-content arg1) (get-content arg2)))
         (error "TENSORS CANNOT HAVE DIFFERENT DIMENSIONS")))
 
@@ -795,7 +686,7 @@
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.> arg2 (get-content arg1))))
 
 (defmethod .> ((arg1 tensor-lst) (arg2 tensor-lst))
-    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+    (if (not (null (equal-tensor (shape arg1) (shape arg2))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.> (get-content arg1) (get-content arg2)))
         (error "TENSORS CANNOT HAVE DIFFERENT DIMENSIONS")))
 
@@ -814,7 +705,7 @@
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.<= arg2 (get-content arg1))))
 
 (defmethod .<= ((arg1 tensor-lst) (arg2 tensor-lst))
-    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+    (if (not (null (equal-tensor (shape arg1) (shape arg2))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.<= (get-content arg1) (get-content arg2)))
         (error "TENSORS CANNOT HAVE DIFFERENT DIMENSIONS")))
 
@@ -833,7 +724,7 @@
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.>= arg2 (get-content arg1))))
 
 (defmethod .>= ((arg1 tensor-lst) (arg2 tensor-lst))
-    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+    (if (not (null (equal-tensor (shape arg1) (shape arg2))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.>= (get-content arg1) (get-content arg2)))
         (error "TENSORS CANNOT HAVE DIFFERENT DIMENSIONS")))
 
@@ -851,7 +742,7 @@
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.= arg2 (get-content arg1))))
 
 (defmethod .= ((arg1 tensor-lst) (arg2 tensor-lst))
-    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+    (if (not (null (equal-tensor (shape arg1) (shape arg2))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.= (get-content arg1) (get-content arg2)))
         (error "TENSORS CANNOT HAVE DIFFERENT DIMENSIONS")))
 
@@ -873,7 +764,7 @@
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.or arg2 (get-content arg1))))
 
 (defmethod .or ((arg1 tensor-lst) (arg2 tensor-lst))
-    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+    (if (not (null (equal-tensor (shape arg1) (shape arg2))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.or (get-content arg1) (get-content arg2)))
         (error "TENSORS CANNOT HAVE DIFFERENT DIMENSIONS")))
 
@@ -895,7 +786,7 @@
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.and arg2 (get-content arg1))))
 
 (defmethod .and ((arg1 tensor-lst) (arg2 tensor-lst))
-    (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
+    (if (not (null (equal-tensor (shape arg1) (shape arg2))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.and (get-content arg1) (get-content arg2)))
         (error "TENSORS CANNOT HAVE DIFFERENT DIMENSIONS")))
 
