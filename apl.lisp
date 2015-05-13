@@ -84,6 +84,11 @@
 
 (defmethod equal-tensor ((tnsr1 t) (tnsr2 t))
     NIL)
+
+(defmethod equal-tensor ((tnsr1 NULL) (tnsr2 NULL))
+	T)
+
+
 (defmethod equal-tensor ((tnsr1 tensor-lst) (tnsr2 tensor-lst))
     (if (and (null (get-content tnsr1)) (null (get-content tnsr1)))
         T
@@ -469,6 +474,12 @@
 
 (defmethod catenate ((arg1 tensor-scalar) (arg2 tensor-lst))
     (catenate (reshape (v-from-lst (append (butlast (get-content (shape arg2))) (list (s 1)))) (v (get-content arg1))) arg2))
+
+(defmethod catenate :before ((arg1 tensor) (arg2 tensor)) 
+	(let*  ((shp1 (shape arg1))
+			(shp2 (shape arg2)))
+		(if (and (and (not (null shp1)) (not (null shp2))) (not (equal-tensor (drop (s -1) shp1) (drop (s -1) shp2))))
+			(error "Shape of tensors not suitable for catenate function."))))
 
 ;member? - Returns a tensor of booleans with the same shape and dimension of the
 ; 			first argument, containing 1 for each element in the corresponding location
