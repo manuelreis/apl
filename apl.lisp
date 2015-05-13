@@ -759,7 +759,7 @@
         ((and (= 0 (get-content arg1)) (= 1 (get-content arg2))) (setf result 1))        
         ((and (= 1 (get-content arg1)) (= 0 (get-content arg2))) (setf result 1))
         ((and (= 1 (get-content arg1)) (= 1 (get-content arg2))) (setf result 1))
-        (t nil))
+        (t (error "ARGUMENTS ARE NOT BOOLEAN")))
     (make-instance 'tensor-scalar :init-val result)))
 
 (defmethod .or ((arg1 tensor-scalar) (arg2 tensor-lst))
@@ -781,7 +781,7 @@
         ((and (= 0 (get-content arg1)) (= 1 (get-content arg2))) (setf result 0))        
         ((and (= 1 (get-content arg1)) (= 0 (get-content arg2))) (setf result 0))
         ((and (= 1 (get-content arg1)) (= 1 (get-content arg2))) (setf result 1))
-        (t nil))
+        (t (error "ARGUMENTS ARE NOT BOOLEAN")))
     (make-instance 'tensor-scalar :init-val result)))
 
 (defmethod .and ((arg1 tensor-scalar) (arg2 tensor-lst))
