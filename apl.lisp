@@ -665,7 +665,7 @@
 (defmethod .+ ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.+ (get-content arg1) (get-content arg2)))
-        nil))
+        (error "TENSORS HAVE DIFFERENT DIMENSIONS")))
 
 
 ;.- Same as the previous one, but using subtraction.
@@ -681,7 +681,7 @@
 (defmethod .-Dyadic ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.-Dyadic (get-content arg1) (get-content arg2)))
-        nil))
+        (error "TENSORS HAVE DIFFERENT DIMENSIONS")))
 
 
 ;.* Same as the previous one, but using multiplication. 
@@ -697,7 +697,7 @@
 (defmethod .* ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.* (get-content arg1) (get-content arg2)))
-        nil))
+        (error "TENSORS HAVE DIFFERENT DIMENSIONS")))
 
 ;./ Same as the previous one, but using division. 
 (defmethod ./Dyadic ((arg1 tensor-scalar) (arg2 tensor-scalar))
@@ -712,7 +712,7 @@
 (defmethod ./Dyadic ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'./Dyadic (get-content arg1) (get-content arg2)))
-        nil))
+        (error "TENSORS HAVE DIFFERENT DIMENSIONS")))
 
 
 ;.// Same as the previous one, but using integer division. 
@@ -728,7 +728,7 @@
 (defmethod .// ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.// (get-content arg1) (get-content arg2)))
-        nil))
+        (error "TENSORS HAVE DIFFERENT DIMENSIONS")))
 
 
 ;.% Same as the previous one, but using the remainder of 
@@ -745,7 +745,7 @@
 (defmethod .% ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.% (get-content arg1) (get-content arg2)))
-        nil))
+        (error "TENSORS HAVE DIFFERENT DIMENSIONS")))
 
 
 ;.< Same as the previous one, but using the relation “less than.”
@@ -764,7 +764,7 @@
 (defmethod .< ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.< (get-content arg1) (get-content arg2)))
-        nil))
+        (error "TENSORS HAVE DIFFERENT DIMENSIONS")))
 
 
 ;.> Same as the previous one, but using the relation “greater than.”
@@ -782,7 +782,7 @@
 (defmethod .> ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.> (get-content arg1) (get-content arg2)))
-        nil))
+        (error "TENSORS HAVE DIFFERENT DIMENSIONS")))
 
 
 ;.<= Same as the previous one, but using the relation “less 
@@ -801,7 +801,7 @@
 (defmethod .<= ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.<= (get-content arg1) (get-content arg2)))
-        nil))
+        (error "TENSORS HAVE DIFFERENT DIMENSIONS")))
 
 
 ;.>= Same as the previous one, but using the relation “greater 
@@ -820,7 +820,7 @@
 (defmethod .>= ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.>= (get-content arg1) (get-content arg2)))
-        nil))
+        (error "TENSORS HAVE DIFFERENT DIMENSIONS")))
 
 
 ;.= Same as the previous one, but using the relation “equal to.” 
@@ -838,7 +838,7 @@
 (defmethod .= ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.= (get-content arg1) (get-content arg2)))
-        nil))
+        (error "TENSORS HAVE DIFFERENT DIMENSIONS")))
 
 
 ;.or Same as the previous one, but using the logical disjunction.
@@ -860,7 +860,7 @@
 (defmethod .or ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (dyadic-equal-dim (get-content (shape arg1)) (get-content (shape arg2)))))
         (make-instance 'tensor-lst :init-val (dyadic-tns-tns #'.or (get-content arg1) (get-content arg2)))
-        nil))
+        (error "TENSORS HAVE DIFFERENT DIMENSIONS")))
 
 
 ;.and Same as the previous one, but using the logical conjunction. 
