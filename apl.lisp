@@ -552,10 +552,15 @@
         (list)
         (cons (funcall func (car lst1) (car lst2)) (dyadic-tns-tns func (cdr lst1) (cdr lst2)))))
 
+(defun dyadic-scalar-tns (func int lst)
+    (if (null lst)
+        (list)
+        (cons (funcall func int (car lst)) (dyadic-scalar-tns func int (cdr lst)))))
+
 (defun dyadic-tns-scalar (func int lst)
     (if (null lst)
         (list)
-        (cons (funcall func int (car lst)) (dyadic-tns-scalar func int (cdr lst)))))
+        (cons (funcall func (car lst) int) (dyadic-tns-scalar func int (cdr lst)))))
 
 
 ;.+ Creates a tensor with the sum of the corresponding 
@@ -564,10 +569,10 @@
     (make-instance 'tensor-scalar :init-val (+ (get-content arg1) (get-content arg2))))
 
 (defmethod .+ ((arg1 tensor-scalar) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.+ arg1 (get-content arg2))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.+ arg1 (get-content arg2))))
 
 (defmethod .+ ((arg1 tensor-lst) (arg2 tensor-scalar))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.+ arg2 (get-content arg1))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.+ arg2 (get-content arg1))))
 
 (defmethod .+ ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (equal-tensor (shape arg1) (shape arg2))))
@@ -580,7 +585,7 @@
     (make-instance 'tensor-scalar :init-val (- (get-content arg1) (get-content arg2))))
 
 (defmethod .-Dyadic ((arg1 tensor-scalar) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.-Dyadic arg1 (get-content arg2))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.-Dyadic arg1 (get-content arg2))))
 
 (defmethod .-Dyadic ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.-Dyadic arg2 (get-content arg1))))
@@ -596,10 +601,10 @@
     (make-instance 'tensor-scalar :init-val (* (get-content arg1) (get-content arg2))))
 
 (defmethod .* ((arg1 tensor-scalar) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.* arg1 (get-content arg2))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.* arg1 (get-content arg2))))
 
 (defmethod .* ((arg1 tensor-lst) (arg2 tensor-scalar))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.* arg2 (get-content arg1))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.* arg2 (get-content arg1))))
 
 (defmethod .* ((arg1 tensor-lst) (arg2 tensor-lst))
     (if (not (null (equal-tensor (shape arg1) (shape arg2))))
@@ -613,7 +618,7 @@
         (make-instance 'tensor-scalar :init-val (/ (get-content arg1) (get-content arg2)))))
 
 (defmethod ./Dyadic ((arg1 tensor-scalar) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'./Dyadic arg1 (get-content arg2))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'./Dyadic arg1 (get-content arg2))))
 
 (defmethod ./Dyadic ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'./Dyadic arg2 (get-content arg1))))
@@ -629,7 +634,7 @@
     (make-instance 'tensor-scalar :init-val (floor (get-content arg1) (get-content arg2))))
 
 (defmethod .// ((arg1 tensor-scalar) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.// arg1 (get-content arg2))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.// arg1 (get-content arg2))))
 
 (defmethod .// ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.// arg2 (get-content arg1))))
@@ -646,7 +651,7 @@
     (make-instance 'tensor-scalar :init-val (nth-value 1 (floor (get-content arg1) (get-content arg2)))))
 
 (defmethod .% ((arg1 tensor-scalar) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.% arg1 (get-content arg2))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.% arg1 (get-content arg2))))
 
 (defmethod .% ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.% arg2 (get-content arg1))))
@@ -665,7 +670,7 @@
         (make-instance 'tensor-scalar :init-val 0)))
 
 (defmethod .< ((arg1 tensor-scalar) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.< arg1 (get-content arg2))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.< arg1 (get-content arg2))))
 
 (defmethod .< ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.< arg2 (get-content arg1))))
@@ -683,7 +688,7 @@
         (make-instance 'tensor-scalar :init-val 0)))
 
 (defmethod .> ((arg1 tensor-scalar) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.> arg1 (get-content arg2))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.> arg1 (get-content arg2))))
 
 (defmethod .> ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.> arg2 (get-content arg1))))
@@ -702,7 +707,7 @@
         (make-instance 'tensor-scalar :init-val 0)))
 
 (defmethod .<= ((arg1 tensor-scalar) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.<= arg1 (get-content arg2))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.<= arg1 (get-content arg2))))
 
 (defmethod .<= ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.<= arg2 (get-content arg1))))
@@ -721,7 +726,7 @@
         (make-instance 'tensor-scalar :init-val 0)))
 
 (defmethod .>= ((arg1 tensor-scalar) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.>= arg1 (get-content arg2))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.>= arg1 (get-content arg2))))
 
 (defmethod .>= ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.>= arg2 (get-content arg1))))
@@ -739,7 +744,7 @@
         (make-instance 'tensor-scalar :init-val 0)))
 
 (defmethod .= ((arg1 tensor-scalar) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.= arg1 (get-content arg2))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.= arg1 (get-content arg2))))
 
 (defmethod .= ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.= arg2 (get-content arg1))))
@@ -757,11 +762,11 @@
         ((and (= 0 (get-content arg1)) (= 1 (get-content arg2))) (setf result 1))        
         ((and (= 1 (get-content arg1)) (= 0 (get-content arg2))) (setf result 1))
         ((and (= 1 (get-content arg1)) (= 1 (get-content arg2))) (setf result 1))
-        (t nil))
+        (t (error "ARGUMENTS ARE NOT BOOLEAN")))
     (make-instance 'tensor-scalar :init-val result)))
 
 (defmethod .or ((arg1 tensor-scalar) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.or arg1 (get-content arg2))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.or arg1 (get-content arg2))))
 
 (defmethod .or ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.or arg2 (get-content arg1))))
@@ -779,11 +784,11 @@
         ((and (= 0 (get-content arg1)) (= 1 (get-content arg2))) (setf result 0))        
         ((and (= 1 (get-content arg1)) (= 0 (get-content arg2))) (setf result 0))
         ((and (= 1 (get-content arg1)) (= 1 (get-content arg2))) (setf result 1))
-        (t nil))
+        (t (error "ARGUMENTS ARE NOT BOOLEAN")))
     (make-instance 'tensor-scalar :init-val result)))
 
 (defmethod .and ((arg1 tensor-scalar) (arg2 tensor-lst))
-    (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.and arg1 (get-content arg2))))
+    (make-instance 'tensor-lst :init-val (dyadic-scalar-tns #'.and arg1 (get-content arg2))))
 
 (defmethod .and ((arg1 tensor-lst) (arg2 tensor-scalar))
     (make-instance 'tensor-lst :init-val (dyadic-tns-scalar #'.and arg2 (get-content arg1))))
