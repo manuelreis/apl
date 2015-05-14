@@ -825,10 +825,7 @@
 
 
 ;ravel - given a tensor, returns a vector containing all the elements of the tensor.
-(defmethod ravel ((tnsr tensor-scalar))
-    (make-instance 'tensor-lst :init-val (list tnsr)))
-
-(defmethod ravel ((tnsr tensor-lst))
+(defmethod ravel ((tnsr tensor))
     (reshape (tally tnsr) tnsr))
 
 ; within - given a vector of numbers v and two
